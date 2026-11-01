@@ -4,6 +4,8 @@ import os
 from datetime import date
 from pathlib import Path
 
+from faultline.env import token
+
 EVENTS = "events"
 
 
@@ -19,11 +21,11 @@ def upload_partition(local: Path, root: Path) -> None:
     """Copy one partition file to the Hugging Face dataset, replacing the file at that path."""
     from huggingface_hub import HfApi
 
-    api = HfApi(token=os.environ["HF_TOKEN"])
+    api = HfApi(token=token("HF_TOKEN"))
     api.upload_file(
         path_or_fileobj=str(local),
         path_in_repo=local.relative_to(root).as_posix(),
-        repo_id=os.environ["HF_DATASET_REPO"],
+        repo_id=token("HF_DATASET_REPO"),
         repo_type="dataset",
     )
 
@@ -31,7 +33,7 @@ def upload_partition(local: Path, root: Path) -> None:
 def _api():
     from huggingface_hub import HfApi
 
-    return HfApi(token=os.environ["HF_TOKEN"])
+    return HfApi(token=token("HF_TOKEN"))
 
 
 def fetch(rel: str, local_dir: Path) -> bool:
@@ -41,11 +43,11 @@ def fetch(rel: str, local_dir: Path) -> bool:
 
     try:
         hf_hub_download(
-            repo_id=os.environ["HF_DATASET_REPO"],
+            repo_id=token("HF_DATASET_REPO"),
             filename=rel,
             repo_type="dataset",
             local_dir=local_dir,
-            token=os.environ["HF_TOKEN"],
+            token=token("HF_TOKEN"),
         )
     except EntryNotFoundError:
         return False
@@ -63,7 +65,7 @@ def upload_batch(items: list[tuple[Path, str]], message: str, chunk: int = 400) 
             for path, rel in items[i : i + chunk]
         ]
         api.create_commit(
-            repo_id=os.environ["HF_DATASET_REPO"],
+            repo_id=token("HF_DATASET_REPO"),
             repo_type="dataset",
             operations=ops,
             commit_message=message,

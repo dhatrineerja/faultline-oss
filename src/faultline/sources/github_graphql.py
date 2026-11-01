@@ -5,10 +5,11 @@ very busy repository cannot use the whole hourly allowance. Every response carri
 remaining rate limit, which the caller uses to stop early.
 """
 
-import os
 from dataclasses import dataclass, field
 
 import httpx
+
+from faultline.env import token
 
 API = "https://api.github.com/graphql"
 PAGE_CAP = {"prs": 40, "issues": 40, "commits": 30}  # 2,000 / 2,000 / 3,000 items at most
@@ -55,7 +56,7 @@ def make_client() -> httpx.Client:
     return httpx.Client(
         timeout=60,
         follow_redirects=True,
-        headers={"Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}"},
+        headers={"Authorization": f"Bearer {token('GITHUB_TOKEN')}"},
     )
 
 

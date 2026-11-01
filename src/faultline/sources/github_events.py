@@ -4,10 +4,11 @@ The endpoint returns at most 300 events from the last 90 days, 100 per page, new
 Conditional requests (If-None-Match) that come back 304 do not use rate limit.
 """
 
-import os
 from dataclasses import dataclass, field
 
 import httpx
+
+from faultline.env import token
 
 API = "https://api.github.com/repos/{repo}/events"
 
@@ -26,7 +27,7 @@ def make_client() -> httpx.Client:
         timeout=30,
         follow_redirects=True,  # renamed or moved repos answer 301 to their new location
         headers={
-            "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+            "Authorization": f"Bearer {token('GITHUB_TOKEN')}",
             "Accept": "application/vnd.github+json",
             "X-GitHub-Api-Version": "2022-11-28",
         },

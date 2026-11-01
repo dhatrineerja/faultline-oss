@@ -4,6 +4,18 @@ import os
 from pathlib import Path
 
 
+def token(name: str) -> str:
+    """Read a secret from the environment without surrounding whitespace.
+
+    Secrets pasted into CI settings often carry a trailing newline, which makes HTTP clients
+    reject the Authorization header. An empty value fails here with a clear message.
+    """
+    value = os.environ.get(name, "").strip()
+    if not value:
+        raise RuntimeError(f"{name} is empty or missing")
+    return value
+
+
 def load_dotenv(path: Path | None = None) -> None:
     path = path or Path(__file__).resolve().parents[2] / ".env"
     if not path.exists():

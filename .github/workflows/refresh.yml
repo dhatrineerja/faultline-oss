@@ -30,6 +30,7 @@ jobs:
         env:
           T: ${{ secrets.GH_API_TOKEN }}
         run: |
+          T=$(printf %s "$T" | tr -d '[:space:]')  # the code trims too; checks the cleaned value
           test -n "$T" || { echo "GH_API_TOKEN is empty or missing"; exit 1; }
           code=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $T" https://api.github.com/rate_limit)
           test "$code" = 200 || { echo "GitHub answered $code"; exit 1; }
