@@ -1,6 +1,6 @@
 # Definitions
 
-**Status: decided, awaiting your sign-off and commit.** This is the main Stage 0 deliverable. The plan requires these to be committed before any data is looked at, so the git history proves they were not fitted to results. Change them afterwards only with a new formula version and a note in the changelog below.
+**Status: decided and committed.** This is the main Stage 0 deliverable. The plan requires these to be committed before any data is looked at, so the git history proves they were not fitted to results. Change them afterwards only with a new formula version and a note in the changelog below.
 
 Values come from [PLAN.md](../PLAN.md). Decisions made on 2026-11-01 are filled in below.
 
@@ -18,7 +18,7 @@ A mature, deliberately finished package is not excluded. It is accepted as a kno
 
 About 2,000 PyPI packages that have a GitHub repository.
 
-Selection rule: at each date, rank PyPI packages that have a GitHub repository by downloads in the prior 90 days and take the top 2,000. The backtest rebuilds the list this way at every cutoff, using only data from before that cutoff.
+Selection rule: at each date, rank PyPI packages that have a GitHub repository by downloads in the prior 30 days and take the top 2,000. The first list is built on 2026-11-01 from the hugovk top-pypi-packages ranking (ClickHouse PyPI download counts). The backtest rebuilds the list this way at every cutoff, using only data from before that cutoff.
 
 ## Score components (formula v1)
 
@@ -66,4 +66,5 @@ Maintainer concentration is a property of a package, never a ranking of people. 
 
 | Date | Formula version | Change |
 | --- | --- | --- |
-| 2026-11-01 | v1 | Initial definitions; all open items decided (not yet committed) |
+| 2026-11-01 | v1 | Initial definitions; all open items decided |
+| 2026-11-01 | v1 | Tracked set ranked by 30-day downloads instead of 90-day, because only a 30-day ranking is freely available. Changed before any data was examined. |
