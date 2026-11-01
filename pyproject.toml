@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "faultline-oss"
+version = "0.0.0"
+description = "Open-source package health scores, hidden dependency risk and recommendations, proven by a backtest."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+authors = [{ name = "Dhatri Neerja" }]
+dependencies = []
+
+# Grouped by layer so each stage installs only what it needs.
+[project.optional-dependencies]
+pipeline = ["duckdb", "httpx", "huggingface_hub", "pyarrow"]
+transform = ["dbt-duckdb"]
+graph = ["neo4j", "networkx"]
+search = ["fastembed", "pgvector", "psycopg[binary]"]
+api = ["fastapi", "uvicorn"]
+dev = ["pytest", "ruff"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]

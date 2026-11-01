@@ -1,0 +1,6 @@
+faultline:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: ../data/faultline.duckdb

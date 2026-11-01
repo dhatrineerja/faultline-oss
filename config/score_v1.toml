@@ -1,0 +1,17 @@
+# Health score formula v1. Start weights from PLAN.md.
+# Never edit a published version: copy to a new file and bump the version.
+# Weights may only be tuned on the backtest's training window.
+
+version = "v1"
+window_days = 90
+dependency_depth_discount = 0.6
+
+[weights]
+maintainer_activity = 20
+contributor_retention = 15
+responsiveness = 15
+pr_flow = 10
+release_recency = 10
+bus_factor = 10
+dependency_risk = 15
+open_vulnerabilities = 5

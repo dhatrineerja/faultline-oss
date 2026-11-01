@@ -1,0 +1,46 @@
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# Local data: the lake lives on Hugging Face, never in git
+data/
+*.parquet
+*.duckdb
+*.duckdb.wal
+*.json.gz
+
+# dbt
+transform/target/
+transform/dbt_packages/
+transform/logs/
+logs/
+
+# Evidence / Node
+node_modules/
+dashboard/build/
+dashboard/.evidence/
+
+# Notebooks
+.ipynb_checkpoints/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
