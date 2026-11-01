@@ -360,7 +360,7 @@ The backtest tests whether the score would have warned about packages that were 
 | Check deps.dev terms and quotas before bulk use | Stage 4 |
 | Verify each related-work tool's current features | Stage 7 |
 | Verify the current status of SBOM rules and the EU Cyber Resilience Act before quoting them | Stage 7 |
-| Estimate and then measure the REST or GraphQL call count for the 6-month backfill, and plan how many hours it spreads over | Stage 1 |
+| Measure the full 6-month backfill. One shard of 50 repositories cost about 340 GraphQL points and 2 minutes 20 seconds, so all 33 shards are projected at about 11,000 points and 1.5 hours of run time, spread over at least 3 hourly allowances; confirm on the full run. Busy repositories are capped at 2,000 PRs, 2,000 issues and 3,000 commits and flagged as truncated | Stage 1 |
 | Check that GH Archive events for tracked repositories are complete before early October 2025, by comparing a sample with the REST API (file sizes alone only show volume) | Stage 6 |
 | Choose the data licence (code licence chosen: Apache-2.0). First check the upstream terms of GH Archive, PyPI, deps.dev and OSV. Add the licence to the Hugging Face dataset card and the README. Keep the Hugging Face dataset private until then | Before the Hugging Face dataset, the dashboard or any scores are made public (at the latest the end of Stage 3, when the site goes live) |
 | Pick a distinct GitHub repository name, such as `faultline-oss`, because a small CLI tool already uses the name, and check domains | Before the repository becomes public |
