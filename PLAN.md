@@ -315,8 +315,8 @@ The backtest tests whether the score would have warned about packages that were 
 
 | Source | Provides | Limitation |
 | --- | --- | --- |
-| GH Archive | Every public GitHub event, in hourly files | Large; misses some private-to-public history; a few hours of delay |
-| GitHub Events API | Recent events per repository | Rate limited; returns only recent events, so it cannot rebuild history |
+| GH Archive | Every public GitHub event, in hourly files | Large; a few hours of delay. Measured 1 November 2026: recent hourly files hold under 1% of the events the Events API shows for the same repositories (file size fell from about 117 MB in January 2025 to about 4 MB in October 2026), so it is not used for current activity |
+| GitHub Events API | Recent events per repository | Rate limited; returns at most 300 events or 90 days per repository, so it cannot rebuild history. This is the source for current activity. The first full load of about 1,650 repositories uses most of an hour's 5,000 calls; later runs use ETags and cost little |
 | GitHub REST or GraphQL API | Repository metadata, archived flag, contributors | Rate limited |
 | PyPI | Releases, project URLs, licence field | Licence field is free text and often inconsistent |
 | deps.dev | Dependency graph, links, licences | Terms and API quotas to be checked before bulk use |

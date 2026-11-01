@@ -10,7 +10,7 @@ import csv
 import shutil
 import sys
 import tempfile
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import duckdb
@@ -89,7 +89,7 @@ def main() -> None:
     parser.add_argument("--date", type=date.fromisoformat, help="UTC day, default yesterday")
     parser.add_argument("--no-upload", action="store_true", help="write the local lake only")
     args = parser.parse_args()
-    day = args.date or (datetime.now(timezone.utc) - timedelta(days=1)).date()
+    day = args.date or (datetime.now(UTC) - timedelta(days=1)).date()
     total = run_day(day, lake_dir(), upload=not args.no_upload)
     print(f"{day}: {total} rows loaded")
 
