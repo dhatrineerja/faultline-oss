@@ -216,7 +216,7 @@ Layer 8, Operations, spans the whole system: alerts, secrets management, CI and 
 | # | Layer | Responsibility | Key design choice | Repository location |
 | --- | --- | --- | --- | --- |
 | 1 | Sources | GH Archive event files, Events API activity, PyPI and deps.dev dependencies and licences, OSV advisories | Public data only | `src/faultline/sources/` |
-| 2 | Ingestion | Three schedules: every 30 minutes (Events API), daily (GH Archive), weekly (deps.dev, OSV, PyPI metadata) | Load only new data; filter to tracked repositories and needed columns at read time | `src/faultline/ingestion/`, `.github/workflows/` |
+| 2 | Ingestion | Three schedules: every 30 minutes (Events API, the source of current activity), daily (GitHub REST API metadata such as archived flag and contributors), weekly (deps.dev, OSV, PyPI metadata). GH Archive is used only for the Stage 6 backfill | Load only new data; filter to tracked repositories and needed columns at read time | `src/faultline/ingestion/`, `.github/workflows/` |
 | 3 | Lake | Date- and hour-partitioned Parquet; raw downloads deleted after each run | The only source of truth; every other store can be rebuilt from it | `src/faultline/lake/` |
 | 4 | Transform and quality | dbt staging, intermediate and marts (daily metrics, health scores, graph edges); tests on every run | Each score row carries its formula version | `transform/` |
 | 5 | Graph compute | PageRank and transitive risk computed inside the pipeline and written back into the marts | Heavy graph work runs offline | `src/faultline/graph_compute/` |
@@ -224,7 +224,7 @@ Layer 8, Operations, spans the whole system: alerts, secrets management, CI and 
 | 7 | Live services | FastAPI recommendation API; Evidence static dashboard | Read-only, cached; keep showing the last good data if a run fails | `src/faultline/api/`, `dashboard/` |
 | 8 | Operations | Alerts, secrets in platform settings, CI running dbt tests | Overwriting by date and hour makes every re-run safe | `ops/`, `.github/workflows/` |
 
-**Two update speeds.** The 30-minute job gives a fresh but partial picture from the Events API. The daily GH Archive run then overwrites those same date-hour partitions with complete data, so fast numbers are always corrected and never double-counted.
+**Current activity and history.** The Events API feeds current activity. It returns at most 300 events or 90 days per repository, so history older than that comes only from GH Archive, which is complete up to early October 2025 and heavily sampled after that (see section 14). Events from the API are merged into date-hour partitions by event id, so re-runs never double-count. The 12-month bus factor cannot come from the Events API, so it uses the GitHub REST API's commit history instead.
 
 **Meaning of "live".** Everything runs in the cloud, and data refreshes about every 30 minutes rather than instantly. Streaming is excluded because it needs an always-on server, and package health does not change minute by minute.
 
@@ -256,12 +256,12 @@ Work proceeds through eight stages, and a stage starts only when the previous ch
 | Stage | Build | Checkpoint to pass | Est. weeks |
 | --- | --- | --- | --- |
 | 0. Setup and definitions | Package list (about 2,000), repository mapping, metric definitions, "abandoned" definition, accounts and limits | Definitions committed before any data is examined; every free-tier limit confirmed in each dashboard | 1 |
-| 1. Daily pipeline | GH Archive daily job, early filtering, Parquet lake | 7 straight days loaded; re-running a day gives identical row counts; raw files deleted | 1 to 2 |
+| 1. Ingestion pipeline | Events API job with ETags, GH Archive loader (kept for the backfill), early filtering, Parquet lake | The first full load completes across the rate limit; 7 straight days of runs; re-running gives identical row counts; unchanged repositories cost no rate limit; raw files deleted | 1 to 2 |
 | 2. Models and score v1 | dbt staging and marts, tests, health score v1 with formula version | All dbt tests pass; score present for 95%+ of mapped packages; spot-check of 10 known packages looks sensible | 1 to 2 |
 | 3. Dashboard, live refresh, alerts (MVP) | Evidence site on Vercel, 30-minute job, failure alerts | Public URL; last-updated time shown; a deliberately broken run sends an alert and the site keeps the last good data | 1 |
 | 4. Knowledge graph (required) | deps.dev and OSV loads, Neo4j model, NetworkX PageRank and dependency risk | Transitive risk and blast-radius queries return for every tracked package; node and edge counts under 80% of the cap | 2 |
 | 5. Search and recommendation | fastembed embeddings in pgvector, FastAPI, filters, ranking, explanation templates | 20 written test queries return sensible top 3s; every explanation sentence traces to a score component | 2 |
-| 6. Backfill and backtest | Pipeline run over past months in chunks; backtest against baselines | Results table published with precision and recall for all baselines, with and without the graph term | 2 |
+| 6. Backfill and backtest | GH Archive replayed in chunks for October 2023 to early October 2025; "abandoned" outcomes from the GitHub REST API and PyPI; backtest against baselines | Results table published with precision and recall for all baselines, with and without the graph term | 2 |
 | 7. Launch and write-up | README, related-work table, architecture diagram, write-up post | A newcomer can understand the project from the README in 5 minutes; all reported figures are measured | 1 |
 
 ### 11.2 Checkpoints per layer
@@ -309,13 +309,14 @@ The backtest tests whether the score would have warned about packages that were 
 | Scheduled workflows run late or are disabled | Stale data | Show last-updated time; alert on staleness; regular commits keep the repository active |
 | Score is gamed, or wrong for unusual projects | Poor advice | Transparent components, an "insufficient data" state, and published misses |
 | Free-tier terms change | A component stops working | Keep the lake as the source of truth so any serving store can be replaced |
+| GitHub's public event feed changes again, or GH Archive stays sampled | Live scores undercount activity; history before the drop is complete but nothing after it is | Current activity comes from the Events API; the lake keeps every event; a volume check on each run alerts on a sudden fall; the backtest uses only the complete period |
 | Scope creep | Project never ships | Ship the Stage 3 MVP, then the graph, before anything new |
 
 ## 14. Data sources
 
 | Source | Provides | Limitation |
 | --- | --- | --- |
-| GH Archive | Every public GitHub event, in hourly files | Large; a few hours of delay. Measured 1 November 2026: recent hourly files hold under 1% of the events the Events API shows for the same repositories (file size fell from about 117 MB in January 2025 to about 4 MB in October 2026), so it is not used for current activity |
+| GH Archive | Every public GitHub event, in hourly files | Large; a few hours of delay. Measured 1 November 2026: recent hourly files hold under 1% of the events the Events API shows for the same repositories (file size held at about 80 to 150 MB through early October 2025, then fell to about 30 MB by mid-October 2025 and about 4 MB by October 2026), so it is not used for current activity |
 | GitHub Events API | Recent events per repository | Rate limited; returns at most 300 events or 90 days per repository, so it cannot rebuild history. This is the source for current activity. The first full load of about 1,650 repositories uses most of an hour's 5,000 calls; later runs use ETags and cost little |
 | GitHub REST or GraphQL API | Repository metadata, archived flag, contributors | Rate limited |
 | PyPI | Releases, project URLs, licence field | Licence field is free text and often inconsistent |
@@ -358,6 +359,7 @@ The backtest tests whether the score would have warned about packages that were 
 | Check deps.dev terms and quotas before bulk use | Stage 4 |
 | Verify each related-work tool's current features | Stage 7 |
 | Verify the current status of SBOM rules and the EU Cyber Resilience Act before quoting them | Stage 7 |
+| Check that GH Archive events for tracked repositories are complete before early October 2025, by comparing a sample with the REST API (file sizes alone only show volume) | Stage 6 |
 | Choose the data licence (code licence chosen: Apache-2.0). First check the upstream terms of GH Archive, PyPI, deps.dev and OSV. Add the licence to the Hugging Face dataset card and the README. Keep the Hugging Face dataset private until then | Before the Hugging Face dataset, the dashboard or any scores are made public (at the latest the end of Stage 3, when the site goes live) |
 | Pick a distinct GitHub repository name, such as `faultline-oss`, because a small CLI tool already uses the name, and check domains | Before the repository becomes public |
 
