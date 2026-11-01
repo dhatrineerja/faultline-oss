@@ -25,6 +25,28 @@ jobs:
           python-version: "3.12"
           cache: pip
       - run: pip install -e ".[pipeline]"
+      # Separate small steps so a failure names the exact secret that is wrong.
+      - name: Check GH_API_TOKEN is set and accepted by GitHub
+        env:
+          T: ${{ secrets.GH_API_TOKEN }}
+        run: |
+          test -n "$T" || { echo "GH_API_TOKEN is empty or missing"; exit 1; }
+          code=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: Bearer $T" https://api.github.com/rate_limit)
+          test "$code" = 200 || { echo "GitHub answered $code"; exit 1; }
+      - name: Check HF_TOKEN and HF_DATASET_REPO can reach the dataset
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_DATASET_REPO: ${{ secrets.HF_DATASET_REPO }}
+        run: |
+          test -n "$HF_TOKEN" || { echo "HF_TOKEN is empty or missing"; exit 1; }
+          test -n "$HF_DATASET_REPO" || { echo "HF_DATASET_REPO is empty or missing"; exit 1; }
+          python -c "
+          import os
+          from huggingface_hub import HfApi
+          api = HfApi(token=os.environ['HF_TOKEN'])
+          info = api.dataset_info(os.environ['HF_DATASET_REPO'])
+          print('dataset reachable; private =', info.private)
+          "
       - name: Load events
         env:
           GITHUB_TOKEN: ${{ secrets.GH_API_TOKEN }}
