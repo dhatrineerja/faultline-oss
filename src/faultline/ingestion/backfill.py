@@ -18,7 +18,7 @@ import pyarrow.parquet as pq
 
 from faultline.env import load_dotenv
 from faultline.ingestion.gharchive_daily import tracked_repos
-from faultline.lake.store import lake_dir
+from faultline.lake.store import fetch, lake_dir, upload_batch
 from faultline.sources.github_graphql import fetch_section, make_client, repo_info
 
 SHARD_SIZE = 50
@@ -177,20 +177,25 @@ def backfill_repo(client, repo: str, since: str) -> tuple[dict[str, list[dict]],
     return rows, remaining_after
 
 
-def write_shard(root: Path, snapshot: str, shard: int, rows: dict[str, list[dict]]) -> None:
+def write_shard(root: Path, snapshot: str, shard: int, rows: dict[str, list[dict]]) -> list[Path]:
+    paths = []
     for table, schema in SCHEMAS.items():
         path = root / "backfill" / table / f"snapshot={snapshot}" / f"shard-{shard:04d}.parquet"
         path.parent.mkdir(parents=True, exist_ok=True)
         tmp = path.with_suffix(".tmp")
         pq.write_table(pa.Table.from_pylist(rows[table], schema=schema), tmp, compression="zstd")
         tmp.replace(path)
+        paths.append(path)
+    return paths
 
 
-def run(root: Path, limit_shards: int | None) -> None:
+def run(root: Path, limit_shards: int | None, upload: bool = False) -> None:
     now = datetime.now(UTC)
     snapshot = now.date().isoformat()
     since = (now - timedelta(days=WINDOW_DAYS)).strftime("%Y-%m-%dT%H:%M:%SZ")
     state_path = root.parent / "state" / "backfill.json"
+    if upload and not state_path.exists():
+        fetch("state/backfill.json", root.parent)  # a fresh runner restores the last state
     state = json.loads(state_path.read_text(encoding="utf-8")) if state_path.exists() else {}
     if state.get("snapshot") != snapshot and state.get("done"):
         print(f"previous backfill was {state['snapshot']}; delete {state_path} to start a new one")
@@ -213,10 +218,17 @@ def run(root: Path, limit_shards: int | None) -> None:
             for rows, _ in results:
                 for table in SCHEMAS:
                     merged[table].extend(rows[table])
-            write_shard(root, snapshot, i, merged)
+            paths = write_shard(root, snapshot, i, merged)
+            if upload:  # data first, then state, so a failed upload leaves the shard to be redone
+                items = [(p, p.relative_to(root).as_posix()) for p in paths]
+                upload_batch(items, f"backfill shard {i}")
             state["done"].append(i)
             state_path.parent.mkdir(parents=True, exist_ok=True)
             state_path.write_text(json.dumps(state), encoding="utf-8")
+            if upload:
+                upload_batch(
+                    [(state_path, "state/backfill.json")], f"backfill state after shard {i}"
+                )
             remaining = min((r for _, r in results if r is not None), default=None)
             print(
                 f"shard {i}: {len(merged['prs'])} PRs, {len(merged['issues'])} issues, "
@@ -232,9 +244,10 @@ def run(root: Path, limit_shards: int | None) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit-shards", type=int, help="process at most N shards (testing)")
+    parser.add_argument("--upload", action="store_true", help="also commit to the HF dataset")
     args = parser.parse_args()
     load_dotenv()
-    run(lake_dir(), args.limit_shards)
+    run(lake_dir(), args.limit_shards, args.upload)
 
 
 if __name__ == "__main__":

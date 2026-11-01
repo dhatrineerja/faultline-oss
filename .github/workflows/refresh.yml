@@ -1,0 +1,40 @@
+name: refresh
+
+# Events API load every 30 minutes. Needs three repository secrets:
+#   GH_API_TOKEN     personal access token (the built-in GITHUB_TOKEN allows only 1,000 calls an hour)
+#   HF_TOKEN         Hugging Face write token
+#   HF_DATASET_REPO  dataset id, for example yourname/faultline-lake
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+# Never run two loads at once: they would merge into the same partitions.
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  events:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[pipeline]"
+      - name: Load events
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_API_TOKEN }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_DATASET_REPO: ${{ secrets.HF_DATASET_REPO }}
+        run: |
+          # Retry a few times: state is saved only after data is stored, so a retry is safe.
+          for attempt in 1 2 3; do
+            python -m faultline.ingestion.events_api && exit 0
+            echo "attempt $attempt failed" >&2
+            sleep 60
+          done
+          exit 1

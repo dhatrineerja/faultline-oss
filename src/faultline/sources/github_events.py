@@ -18,6 +18,7 @@ class EventsResult:
     events: list[dict] = field(default_factory=list)
     etag: str | None = None
     rate_remaining: int | None = None
+    gap: bool = False  # True if events between the last run and the oldest fetched may be missed
 
 
 def make_client() -> httpx.Client:
@@ -64,4 +65,7 @@ def fetch_events(
         reached_known = newer_than and batch and batch[-1]["created_at"] <= newer_than
         if len(batch) < 100 or reached_known:
             break
+    else:
+        # every page was full and none reached the last-seen event: some events were not fetched
+        return EventsResult(200, events, first_etag, remaining, gap=bool(newer_than))
     return EventsResult(200, events, first_etag, remaining)
