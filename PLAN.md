@@ -224,7 +224,7 @@ Layer 8, Operations, spans the whole system: alerts, secrets management, CI and 
 | 7 | Live services | FastAPI recommendation API; Evidence static dashboard | Read-only, cached; keep showing the last good data if a run fails | `src/faultline/api/`, `dashboard/` |
 | 8 | Operations | Alerts, secrets in platform settings, CI running dbt tests | Overwriting by date and hour makes every re-run safe | `ops/`, `.github/workflows/` |
 
-**Current activity and history.** The Events API feeds current activity. It returns at most 300 events or 90 days per repository, so history older than that comes only from GH Archive, which is complete up to early October 2025 and heavily sampled after that (see section 14). Events from the API are merged into date-hour partitions by event id, so re-runs never double-count. The 12-month bus factor cannot come from the Events API, so it uses the GitHub REST API's commit history instead.
+**Current activity and history.** The Events API feeds current activity. It returns at most 300 events or 90 days per repository, so history older than that comes only from GH Archive, which is complete up to early October 2025 and heavily sampled after that (see section 14). Events from the API are merged into date-hour partitions by event id, so re-runs never double-count. The Events API cannot fill a 90-day window on day one, and a busy repository's 300 events can span only a few days, so a one-time backfill of the last 6 months from the GitHub REST or GraphQL API covers the window metrics at launch. The 12-month bus factor also uses the REST API's commit history.
 
 **Meaning of "live".** Everything runs in the cloud, and data refreshes about every 30 minutes rather than instantly. Streaming is excluded because it needs an always-on server, and package health does not change minute by minute.
 
@@ -256,7 +256,7 @@ Work proceeds through eight stages, and a stage starts only when the previous ch
 | Stage | Build | Checkpoint to pass | Est. weeks |
 | --- | --- | --- | --- |
 | 0. Setup and definitions | Package list (about 2,000), repository mapping, metric definitions, "abandoned" definition, accounts and limits | Definitions committed before any data is examined; every free-tier limit confirmed in each dashboard | 1 |
-| 1. Ingestion pipeline | Events API job with ETags, GH Archive loader (kept for the backfill), early filtering, Parquet lake | The first full load completes across the rate limit; 7 straight days of runs; re-running gives identical row counts; unchanged repositories cost no rate limit; raw files deleted | 1 to 2 |
+| 1. Ingestion pipeline | Events API job with ETags, GH Archive loader (kept for the Stage 6 backfill), a one-time REST or GraphQL backfill of the last 6 months of pull requests, issues, commits and releases for tracked repositories, early filtering, Parquet lake | The first full load completes across the rate limit; the 6-month backfill covers at least 95% of tracked repositories, with its call count measured and logged; 7 straight days of runs; re-running gives identical row counts; unchanged repositories cost no rate limit; raw files deleted | 1 to 2 |
 | 2. Models and score v1 | dbt staging and marts, tests, health score v1 with formula version | All dbt tests pass; score present for 95%+ of mapped packages; spot-check of 10 known packages looks sensible | 1 to 2 |
 | 3. Dashboard, live refresh, alerts (MVP) | Evidence site on Vercel, 30-minute job, failure alerts | Public URL; last-updated time shown; a deliberately broken run sends an alert and the site keeps the last good data | 1 |
 | 4. Knowledge graph (required) | deps.dev and OSV loads, Neo4j model, NetworkX PageRank and dependency risk | Transitive risk and blast-radius queries return for every tracked package; node and edge counts under 80% of the cap | 2 |
@@ -309,6 +309,7 @@ The backtest tests whether the score would have warned about packages that were 
 | Scheduled workflows run late or are disabled | Stale data | Show last-updated time; alert on staleness; regular commits keep the repository active |
 | Score is gamed, or wrong for unusual projects | Poor advice | Transparent components, an "insufficient data" state, and published misses |
 | Free-tier terms change | A component stops working | Keep the lake as the source of truth so any serving store can be replaced |
+| Events API history is short (300 events or 90 days) and a long outage loses events for busy repositories | Window metrics, retention in particular, are incomplete at launch or after a gap | One-time 6-month REST backfill; alert when a run is missed; re-run the REST backfill for any gap |
 | GitHub's public event feed changes again, or GH Archive stays sampled | Live scores undercount activity; history before the drop is complete but nothing after it is | Current activity comes from the Events API; the lake keeps every event; a volume check on each run alerts on a sudden fall; the backtest uses only the complete period |
 | Scope creep | Project never ships | Ship the Stage 3 MVP, then the graph, before anything new |
 
@@ -359,6 +360,7 @@ The backtest tests whether the score would have warned about packages that were 
 | Check deps.dev terms and quotas before bulk use | Stage 4 |
 | Verify each related-work tool's current features | Stage 7 |
 | Verify the current status of SBOM rules and the EU Cyber Resilience Act before quoting them | Stage 7 |
+| Estimate and then measure the REST or GraphQL call count for the 6-month backfill, and plan how many hours it spreads over | Stage 1 |
 | Check that GH Archive events for tracked repositories are complete before early October 2025, by comparing a sample with the REST API (file sizes alone only show volume) | Stage 6 |
 | Choose the data licence (code licence chosen: Apache-2.0). First check the upstream terms of GH Archive, PyPI, deps.dev and OSV. Add the licence to the Hugging Face dataset card and the README. Keep the Hugging Face dataset private until then | Before the Hugging Face dataset, the dashboard or any scores are made public (at the latest the end of Stage 3, when the site goes live) |
 | Pick a distinct GitHub repository name, such as `faultline-oss`, because a small CLI tool already uses the name, and check domains | Before the repository becomes public |
