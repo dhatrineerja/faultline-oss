@@ -18,6 +18,7 @@ import pyarrow as pa
 
 from faultline.config import tracked_repos
 from faultline.env import load_dotenv
+from faultline.lake.runlog import describe, lake_size, write_run_record
 from faultline.lake.store import fetch, lake_dir, partition_path, upload_batch
 from faultline.sources.github_events import fetch_events, make_client
 
@@ -88,6 +89,9 @@ def run(root: Path, upload: bool, limit: int | None) -> None:
     stats = {"changed": 0, "unchanged": 0, "missing": 0, "failed": 0, "skipped": 0, "gaps": 0}
     rows: list[dict] = []
     low_rate = False
+    started = datetime.now(UTC)
+    lists: dict[str, list[str]] = {"missing_repos": [], "failed_repos": [], "gap_repos": []}
+    headroom: list[int] = []
 
     with make_client() as client:
 
@@ -102,19 +106,24 @@ def run(root: Path, upload: bool, limit: int | None) -> None:
                 if res is None:
                     stats["skipped"] += 1
                     continue
+                if res.rate_remaining is not None and res.rate_remaining >= 0:
+                    headroom.append(res.rate_remaining)
                 if res.rate_remaining is not None and 0 <= res.rate_remaining < MIN_RATE_LEFT:
                     low_rate = True
                 if res.status == 304:
                     stats["unchanged"] += 1
                 elif res.status == 404:
                     stats["missing"] += 1
+                    lists["missing_repos"].append(repo)
                 elif res.status != 200:
                     stats["failed"] += 1
+                    lists["failed_repos"].append(repo)
                     print(f"failed {repo}: HTTP {res.status}", file=sys.stderr)
                 else:
                     stats["changed"] += 1
                     if res.gap:
                         stats["gaps"] += 1  # more new events than one run could page through
+                        lists["gap_repos"].append(repo)
                     rows.extend(to_row(e, repo) for e in res.events)
                     newest = max((e["created_at"] for e in res.events), default=None)
                     state[repo] = {
@@ -137,12 +146,26 @@ def run(root: Path, upload: bool, limit: int | None) -> None:
     # State is written last, after the data is safely stored, so a failed run is simply retried.
     state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(json.dumps(state), encoding="utf-8")
+    record = {
+        "started_at": started.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "repos": len(repos),
+        **stats,
+        "events": len(rows),
+        "partitions": len(groups),
+        "rate_remaining_min": min(headroom) if headroom else None,
+        "stopped_early": low_rate,
+        **lists,
+        **(lake_size() if upload else {}),
+    }
+    record_path, record_rel = write_run_record(root, "events_api", record)
     if upload:
+        uploads.append((record_path, record_rel))
         uploads.append((state_path, "state/events_api.json"))
         stamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M")
         upload_batch(uploads, f"events_api {stamp} UTC: {len(rows)} events")
     print(
-        f"repos {len(repos)}: {stats}; events {len(rows)} in {len(groups)} partitions",
+        f"repos {len(repos)}: {stats}; events {len(rows)} in {len(groups)} partitions; "
+        f"{describe(record)}",
         file=sys.stderr,
     )
     if low_rate:
