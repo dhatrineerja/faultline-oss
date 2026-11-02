@@ -1,0 +1,6 @@
+package,github_repo,reason,checked_on
+fetch-use,browser-use/fetch-use,GitHub answers 404 (repo missing or private),2026-11-02
+ddtrace-internal,datadog/datadog-apm-python,GitHub answers 404; PyPI links a repo that no longer exists,2026-11-02
+latex2sympy2-extended,orangex4/latex2sympy2,GitHub answers 404; PyPI links a repo that no longer exists,2026-11-02
+burner-redis,prefecthq/burner-redis,GitHub answers 404 (repo missing or private),2026-11-02
+autobahn,crossbario/autobahn-python,GitHub Events API returns 502 for page 1 on every request; the backfill covers it,2026-11-02
