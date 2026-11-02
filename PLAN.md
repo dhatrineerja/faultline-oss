@@ -361,7 +361,7 @@ The backtest tests whether the score would have warned about packages that were 
 | Check deps.dev terms and quotas before bulk use | Stage 4 |
 | Verify each related-work tool's current features | Stage 7 |
 | Verify the current status of SBOM rules and the EU Cyber Resilience Act before quoting them | Stage 7 |
-| Check that GH Archive events for tracked repositories are complete before early October 2025, by comparing a sample with the REST API (file sizes alone only show volume) | Stage 6 |
+| GH Archive completeness before October 2025: one check (8 hours on 2025-09-16, pull requests opened, 1,647 tracked repositories) found 198 events in the archive against 407 per GitHub's own search, about 49%, and only 89 of the 141 active repositories appeared at all. Repository renames may explain part of the gap, and the check covers one window and one event type. Decide whether Stage 6 builds the backtest from GraphQL history instead of the archive | Before Stage 6 |
 | Before publishing: email deps.dev about bulk use and quotas; create a separate public dataset for the derived tables (the raw lake stays private); add the licence and attribution notice from [docs/data-licence.md](docs/data-licence.md) to the dataset card and the README | Before the derived dataset or the dashboard goes public (at the latest the end of Stage 3) |
 | Pick a distinct GitHub repository name, such as `faultline-oss`, because a small CLI tool already uses the name, and check domains | Before the repository becomes public |
 
