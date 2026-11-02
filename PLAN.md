@@ -349,7 +349,7 @@ The backtest tests whether the score would have warned about packages that were 
 ### 16.3 Terms and licensing
 
 - **Terms of use.** The project follows GitHub's API terms and rate limits, and the terms of GH Archive, deps.dev and OSV. Every data source is credited on the site.
-- **Licensing.** Code is published under Apache-2.0 (chosen 1 November 2026). Derived scores will go under an open data licence, planned as CC BY 4.0, once upstream terms are checked, so others can check the method. Until then no data or scores are published: the Hugging Face dataset stays private and the dashboard stays unreleased.
+- **Licensing.** Code is published under Apache-2.0 (chosen 1 November 2026). Published package-level scores go under CC BY 4.0, with an attribution notice for GitHub, PyPI, deps.dev and OSV; the reasoning and the upstream terms are in [docs/data-licence.md](docs/data-licence.md). The raw lake contains GitHub usernames and is never published: the Hugging Face dataset that holds it stays private, and a separate public dataset carries only the derived package-level tables. Until that dataset exists nothing is published.
 
 ## 17. Open items
 
@@ -362,7 +362,7 @@ The backtest tests whether the score would have warned about packages that were 
 | Verify each related-work tool's current features | Stage 7 |
 | Verify the current status of SBOM rules and the EU Cyber Resilience Act before quoting them | Stage 7 |
 | Check that GH Archive events for tracked repositories are complete before early October 2025, by comparing a sample with the REST API (file sizes alone only show volume) | Stage 6 |
-| Choose the data licence (code licence chosen: Apache-2.0). First check the upstream terms of GH Archive, PyPI, deps.dev and OSV. Add the licence to the Hugging Face dataset card and the README. Keep the Hugging Face dataset private until then | Before the Hugging Face dataset, the dashboard or any scores are made public (at the latest the end of Stage 3, when the site goes live) |
+| Before publishing: email deps.dev about bulk use and quotas; create a separate public dataset for the derived tables (the raw lake stays private); add the licence and attribution notice from [docs/data-licence.md](docs/data-licence.md) to the dataset card and the README | Before the derived dataset or the dashboard goes public (at the latest the end of Stage 3) |
 | Pick a distinct GitHub repository name, such as `faultline-oss`, because a small CLI tool already uses the name, and check domains | Before the repository becomes public |
 
 ## 18. References

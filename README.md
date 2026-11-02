@@ -106,4 +106,4 @@ pytest
 
 ## Licence
 
-The code is released under the [Apache License 2.0](LICENSE). The licence for the derived scores will be chosen once the upstream data terms are checked (planned: CC BY 4.0).
+The code is released under the [Apache License 2.0](LICENSE). Published package-level scores will be licensed CC BY 4.0 with attribution to the upstream sources; see [docs/data-licence.md](docs/data-licence.md). The raw data lake contains GitHub usernames and is not published.
