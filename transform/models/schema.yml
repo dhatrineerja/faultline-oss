@@ -75,5 +75,13 @@ models:
           - accepted_values:
               arguments:
                 values: [scored, dormant, insufficient_data, unmapped]
+      - name: confidence
+        description: >
+          'normal' when four or more components went into the score, 'low' when two or three did;
+          empty when there is no score.
+        tests:
+          - accepted_values:
+              arguments:
+                values: [normal, low]
       - name: n_components
         tests: [not_null]

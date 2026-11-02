@@ -6,7 +6,7 @@
 | **Author and owner** | Dhatri Neerja |
 | **Version** | 1.1 |
 | **Date** | 2 November 2026 |
-| **Status** | Stage 0 done. Stage 1 built and loaded (Events API job on a 30-minute schedule, 6-month backfill and PyPI history uploaded); its 7-day run checkpoint is in progress. Stage 2 built (dbt models, 29 tests, score v1); score coverage is 91.1% against the 95% target. Stage 3 is next. |
+| **Status** | Stage 0 done. Stage 1 built and loaded (Events API job on a 30-minute schedule, 6-month backfill and PyPI history uploaded); its 7-day run checkpoint is in progress. Stage 2 built (dbt models, 29 tests, score v1); score coverage is 98.0% against the 95% target (40 packages unscored; 808 scores are labelled low confidence). Stage 3 is next. |
 
 Stages 1 and 2 are built; everything from Stage 3 onward is still a plan. Costs, limits and timelines for stages not yet built are planning estimates, and the items in [section 17](#17-open-items) must be confirmed before they are relied on. Version 1.1 changed the data sources after GH Archive was measured and found incomplete (see sections 9 and 14).
 

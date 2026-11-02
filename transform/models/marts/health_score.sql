@@ -83,6 +83,18 @@ scored as (
             + (pct_release_recency is not null)::int * {{ w['release_recency'] }}
             + (pct_bus_factor is not null)::int * {{ w['bus_factor'] }} as weight_used
     from package_pct
+),
+
+-- Three components are enough. Two are enough only when they are maintainer activity and release
+-- recency: the one pair checked against the rest of the score (rank correlation 0.56 to 0.63), so
+-- other pairs stay unscored until they are checked the same way. Such scores are marked low.
+flagged as (
+    select
+        *,
+        n_components >= {{ var('insufficient_data_below') }}
+            or (n_components = 2 and pct_maintainer_activity is not null
+                and pct_release_recency is not null) as enough_data
+    from scored
 )
 
 select
@@ -96,14 +108,22 @@ select
         -- no human merged or released in the window: the silence is the finding, so the package
         -- is scored on the components that exist instead of being hidden as missing data
         when maintainer_activity = 0 and release_recency_days is not null then 'dormant'
+        when enough_data then 'scored'
         else 'insufficient_data'
     end as status,
     case
         when repo_found
-         and (n_components >= {{ var('insufficient_data_below') }}
-              or (maintainer_activity = 0 and release_recency_days is not null))
+         and (enough_data or (maintainer_activity = 0 and release_recency_days is not null))
             then round(weighted_sum / weight_used, 1)
     end as score,
+    case
+        when not repo_found
+            or not (enough_data
+                    or coalesce(maintainer_activity = 0 and release_recency_days is not null, false))
+            then null
+        when n_components >= 4 then 'normal'
+        else 'low'
+    end as confidence,
     n_components,
     false as graph_terms_included,
     is_archived,
@@ -120,4 +140,4 @@ select
     pct_pr_flow,
     pct_release_recency,
     pct_bus_factor
-from scored
+from flagged
