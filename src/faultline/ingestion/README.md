@@ -4,10 +4,12 @@ Job entry points called by GitHub Actions. Load only new data, and filter to tra
 
 | Schedule | Pulls | Stage |
 | --- | --- | --- |
-| Every 30 min | Events API for tracked repos (`events_api.py`, built in Stage 1) | 1, 3 |
-| Daily | GH Archive (`gharchive_daily.py`); recent files are heavily sampled, so not used for current activity | 1 |
+| Every 30 min | Events API for tracked repos (`events_api.py`), via `.github/workflows/refresh.yml` | 1 |
+| Once, then on gaps | 6-month GraphQL backfill (`backfill.py`): PRs, issues, commits, releases | 1 |
+| Daily | GitHub REST metadata such as the archived flag | 2 or 3 |
+| Stage 6 only | GH Archive (`gharchive_daily.py`) replayed for history to early October 2025; recent files are heavily sampled | 6 |
 | Weekly | deps.dev, OSV, PyPI metadata | 4 |
 
-The 30-minute job gives a fresh but partial picture. The daily run overwrites those same date-hour partitions with complete data, so fast numbers are corrected and never double-counted.
+The Events API returns at most 300 events or 90 days per repo, so the 6-month backfill fills the window at launch and any gap after a long outage. Events are merged into date-hour partitions by id and per-repo state advances only after the data is stored, so a retry never double-counts or loses events.
 
 **Done when:** all three schedules run on time for a week, and rate-limit headroom is logged on every API run.

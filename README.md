@@ -32,7 +32,7 @@ The full reasoning is in [PLAN.md](PLAN.md).
 Scheduled jobs build one source of truth (the Parquet lake), copy what each live feature needs into a store suited to it, and visitors only ever read those copies.
 
 ```text
-GH Archive, Events API, GitHub API, PyPI, deps.dev, OSV     (1 sources)
+Events API, GitHub REST/GraphQL, GH Archive (history), PyPI, deps.dev, OSV   (1 sources)
         |  GitHub Actions: every 30 min / daily / weekly    (2 ingestion)
         v
 Date- and hour-partitioned Parquet on Hugging Face          (3 lake, source of truth)
@@ -72,7 +72,7 @@ Do not start a stage until the previous gate passes. Full criteria are in the [p
 | Stage | Build | Est. weeks |
 | --- | --- | --- |
 | 0 | Setup and definitions | 1 |
-| 1 | Daily pipeline | 1 to 2 |
+| 1 | Ingestion pipeline | 1 to 2 |
 | 2 | Models and score v1 | 1 to 2 |
 | 3 | Dashboard, live refresh, alerts (MVP) | 1 |
 | 4 | Knowledge graph (required) | 2 |

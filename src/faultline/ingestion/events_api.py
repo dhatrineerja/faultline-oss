@@ -1,6 +1,6 @@
 """Fresh job: pull recent events for every tracked repo from the GitHub Events API.
 
-Rows go to the `events_api` table with the GH Archive table's columns plus tracked_repo (the packages.csv name), in
+Rows go to the `events_api` table with the same columns as the GH Archive table plus tracked_repo (the packages.csv name), in
 date-hour partitions. A partition is merged by event id, so re-running never duplicates.
 Per-repo ETags and newest-seen times are kept in state/events_api.json so unchanged repos
 cost no rate limit.
