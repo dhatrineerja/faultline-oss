@@ -32,7 +32,7 @@ The full reasoning is in [PLAN.md](PLAN.md).
 Scheduled jobs build one source of truth (the Parquet lake), copy what each live feature needs into a store suited to it, and visitors only ever read those copies.
 
 ```text
-Events API, GitHub REST/GraphQL, GH Archive (history), PyPI, deps.dev, OSV   (1 sources)
+Events API, GitHub REST/GraphQL, PyPI, deps.dev, OSV        (1 sources)
         |  GitHub Actions: every 30 min / daily / weekly    (2 ingestion)
         v
 Date- and hour-partitioned Parquet on Hugging Face          (3 lake, source of truth)

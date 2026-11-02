@@ -16,8 +16,8 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
+from faultline.config import tracked_repos
 from faultline.env import load_dotenv
-from faultline.ingestion.gharchive_daily import tracked_repos
 from faultline.lake.store import fetch, lake_dir, upload_batch
 from faultline.sources.github_graphql import fetch_section, make_client, repo_info
 

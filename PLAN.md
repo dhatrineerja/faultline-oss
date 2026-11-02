@@ -8,7 +8,7 @@
 | **Date** | 2 November 2026 |
 | **Status** | Stage 0 done. Stage 1 pipeline built and loaded (Events API job on a 30-minute schedule, 6-month backfill uploaded); the 7-day run checkpoint is in progress. Stage 2 is next. |
 
-Stage 1 is built; everything from Stage 2 onward is still a plan. Costs, limits and timelines for stages not yet built are planning estimates, and the items in [section 17](#17-open-items) must be confirmed before they are relied on. Version 1.1 changed the data sources after GH Archive was found to be heavily sampled from October 2025 (see sections 9 and 14).
+Stage 1 is built; everything from Stage 2 onward is still a plan. Costs, limits and timelines for stages not yet built are planning estimates, and the items in [section 17](#17-open-items) must be confirmed before they are relied on. Version 1.1 changed the data sources after GH Archive was measured and found incomplete (see sections 9 and 14).
 
 ## Contents
 
@@ -172,9 +172,9 @@ Every choice runs on a free tier and has a named alternative for larger scale. L
 
 | Layer | Choice | Rationale | Alternative at scale | Limit to plan for |
 | --- | --- | --- | --- | --- |
-| Sources | GitHub Events API (current activity), GitHub REST and GraphQL API (6-month backfill, metadata), GH Archive (history to early October 2025 only), PyPI, deps.dev, OSV | Public and free; together they cover activity, dependencies and vulnerabilities | Paid data feeds, private registries | GitHub API rate limits |
+| Sources | GitHub Events API (current activity), GitHub REST and GraphQL API (the 6-month backfill, backtest history and metadata), PyPI, deps.dev, OSV | Public and free; together they cover activity, dependencies and vulnerabilities | Paid data feeds, private registries | GitHub API rate limits |
 | Orchestration | GitHub Actions on a cron | No server to run; logs, secrets and retries built in | Airflow or Dagster | Schedules can start late; can be disabled after long repository inactivity |
-| Processing | DuckDB and Python | Reads compressed JSON and Parquet fast on one machine | Spark or BigQuery | Runner disk and memory; the Stage 6 backfill processes one hour of GH Archive at a time |
+| Processing | DuckDB and Python | Reads compressed JSON and Parquet fast on one machine | Spark or BigQuery | Runner disk and memory; the Stage 6 history load is paged by repository and date range |
 | Transformation | dbt (dbt-duckdb) | SQL models with tests, documentation and lineage | Same tool on a warehouse | None material |
 | Data quality | dbt tests and Pandera-style checks | Catches broken loads before they reach users | Great Expectations, Soda | None |
 | Lake | Date-partitioned Parquet in a Hugging Face dataset | Columnar, permanent and versioned, unlike Actions and Space disks | S3 or GCS with Iceberg or Delta | Dataset size guidance |
@@ -192,7 +192,7 @@ Scheduled jobs build one source of truth, the Parquet lake, and copy what each l
 
 ```mermaid
 flowchart TD
-    S["1. Sources<br/>Events API, GitHub REST and GraphQL, GH Archive (history only), PyPI, deps.dev, OSV"]
+    S["1. Sources<br/>Events API, GitHub REST and GraphQL, PyPI, deps.dev, OSV"]
     I["2. Ingestion<br/>GitHub Actions: 30-minute, daily, weekly"]
     L[("3. Lake<br/>Partitioned Parquet on Hugging Face")]
     T["4. Transform and quality<br/>dbt on DuckDB"]
@@ -215,7 +215,7 @@ Layer 8, Operations, spans the whole system: alerts, secrets management, CI and 
 
 | # | Layer | Responsibility | Key design choice | Repository location |
 | --- | --- | --- | --- | --- |
-| 1 | Sources | Events API and GitHub REST and GraphQL for current activity and the 6-month backfill, GH Archive event files for history to early October 2025, PyPI and deps.dev dependencies and licences, OSV advisories | Public data only | `src/faultline/sources/` |
+| 1 | Sources | Events API for current activity, GitHub REST and GraphQL for the 6-month backfill, backtest history and metadata, PyPI and deps.dev dependencies and licences, OSV advisories | Public data only | `src/faultline/sources/` |
 | 2 | Ingestion | Three schedules: every 30 minutes (Events API, the source of current activity), daily (GitHub REST API metadata such as archived flag and contributors), weekly (deps.dev, OSV, PyPI metadata). GH Archive is used only for the Stage 6 backfill | Load only new data; filter to tracked repositories and needed columns at read time | `src/faultline/ingestion/`, `.github/workflows/` |
 | 3 | Lake | Date- and hour-partitioned Parquet; raw downloads deleted after each run | The only source of truth; every other store can be rebuilt from it | `src/faultline/lake/` |
 | 4 | Transform and quality | dbt staging, intermediate and marts (daily metrics, health scores, graph edges); tests on every run | Each score row carries its formula version | `transform/` |
@@ -224,7 +224,7 @@ Layer 8, Operations, spans the whole system: alerts, secrets management, CI and 
 | 7 | Live services | FastAPI recommendation API; Evidence static dashboard | Read-only, cached; keep showing the last good data if a run fails | `src/faultline/api/`, `dashboard/` |
 | 8 | Operations | Alerts, secrets in platform settings, CI running dbt tests | Overwriting by date and hour makes every re-run safe | `ops/`, `.github/workflows/` |
 
-**Current activity and history.** The Events API feeds current activity. It returns at most 300 events or 90 days per repository, so history older than that comes only from GH Archive, which is complete up to early October 2025 and heavily sampled after that (see section 14). Events from the API are merged into date-hour partitions by event id, so re-runs never double-count. The Events API cannot fill a 90-day window on day one, and a busy repository's 300 events can span only a few days, so a one-time backfill of the last 6 months from the GitHub REST or GraphQL API covers the window metrics at launch. The 12-month bus factor also uses the REST API's commit history. Measured on 1 to 2 November 2026: the backfill covered 1,643 of 1,647 repositories in 33 shards over four hourly allowances (about 11,000 GraphQL points as projected), with 32 repositories capped on PRs, 10 on issues and 9 on commits.
+**Current activity and history.** The Events API feeds current activity. It returns at most 300 events or 90 days per repository, so a one-time backfill of the last 6 months from the GitHub GraphQL API covers the window metrics at launch, and the same API supplies the history for the Stage 6 backtest. Events from the API are merged into date-hour partitions by event id, so re-runs never double-count. The 12-month bus factor also uses commit history from the API. Measured on 1 to 2 November 2026: the backfill covered 1,643 of 1,647 repositories in 33 shards over four hourly allowances (about 11,000 GraphQL points as projected), with 32 repositories capped on PRs, 10 on issues and 9 on commits.
 
 **Meaning of "live".** Everything runs in the cloud, and data refreshes about every 30 minutes rather than instantly. Streaming is excluded because it needs an always-on server, and package health does not change minute by minute.
 
@@ -256,12 +256,12 @@ Work proceeds through eight stages, and a stage starts only when the previous ch
 | Stage | Build | Checkpoint to pass | Est. weeks |
 | --- | --- | --- | --- |
 | 0. Setup and definitions | Package list (about 2,000), repository mapping, metric definitions, "abandoned" definition, accounts and limits | Definitions committed before any data is examined; every free-tier limit confirmed in each dashboard | 1 |
-| 1. Ingestion pipeline | Events API job with ETags, GH Archive loader (kept for the Stage 6 backfill), a one-time REST or GraphQL backfill of the last 6 months of pull requests, issues, commits and releases for tracked repositories, early filtering, Parquet lake | The first full load completes across the rate limit; the 6-month backfill covers at least 95% of tracked repositories, with its call count measured and logged; 7 straight days of runs; re-running gives identical row counts; unchanged repositories cost no rate limit; raw files deleted | 1 to 2 |
+| 1. Ingestion pipeline | Events API job with ETags, a one-time REST or GraphQL backfill of the last 6 months of pull requests, issues, commits and releases for tracked repositories, early filtering, Parquet lake | The first full load completes across the rate limit; the 6-month backfill covers at least 95% of tracked repositories, with its call count measured and logged; 7 straight days of runs; re-running gives identical row counts; unchanged repositories cost no rate limit; raw files deleted | 1 to 2 |
 | 2. Models and score v1 | dbt staging and marts, tests, health score v1 with formula version | All dbt tests pass; score present for 95%+ of mapped packages; spot-check of 10 known packages looks sensible | 1 to 2 |
 | 3. Dashboard, live refresh, alerts (MVP) | Evidence site on Vercel, 30-minute job, failure alerts | Public URL; last-updated time shown; a deliberately broken run sends an alert and the site keeps the last good data | 1 |
 | 4. Knowledge graph (required) | deps.dev and OSV loads, Neo4j model, NetworkX PageRank and dependency risk | Transitive risk and blast-radius queries return for every tracked package; node and edge counts under 80% of the cap | 2 |
 | 5. Search and recommendation | fastembed embeddings in pgvector, FastAPI, filters, ranking, explanation templates | 20 written test queries return sensible top 3s; every explanation sentence traces to a score component | 2 |
-| 6. Backfill and backtest | GH Archive replayed in chunks for October 2023 to early October 2025; "abandoned" outcomes from the GitHub REST API and PyPI; backtest against baselines | Results table published with precision and recall for all baselines, with and without the graph term | 2 |
+| 6. Backfill and backtest | GraphQL history loaded by date range for each of the nine cutoffs from October 2023 to October 2025 (the 90 days before each cutoff, 12 months of commits for bus factor, and the 12 months after for outcomes); "abandoned" outcomes from the archived flag, releases and commits plus PyPI; backtest against baselines | Results table published with precision and recall for all baselines, with and without the graph term; repositories hitting the page caps are counted and reported | 2 to 3 |
 | 7. Launch and write-up | README, related-work table, architecture diagram, write-up post | A newcomer can understand the project from the README in 5 minutes; all reported figures are measured | 1 |
 
 ### 11.2 Checkpoints per layer
@@ -297,7 +297,7 @@ The backtest tests whether the score would have warned about packages that were 
 - **Base rate:** abandonment is rare, so report precision at a fixed alert budget (for example the bottom 5% of scores) and PR-AUC rather than accuracy.
 - **Survivorship bias:** build the package list as it existed at each cutoff, not from the current list.
 - **Lead time:** report how many months ahead the score first crossed the warning line.
-- **Feature source:** the backtest uses GH Archive features, while live scores use Events API and REST features. Before reporting, compute both for one recent overlap period and report how far they differ, so the live score is not assumed to match the backtest exactly.
+- **Feature source:** the backtest builds its features from GraphQL history, while live scores add the Events API for freshness. Before reporting, compute the live features from GraphQL alone for one recent period and report how far the two differ, so the live score is not assumed to match the backtest exactly.
 - **Recommendation check:** for the 20 test queries, record whether the top pick remained healthy 12 months later, against the most-starred option.
 
 ## 13. Risks and mitigations
@@ -311,14 +311,14 @@ The backtest tests whether the score would have warned about packages that were 
 | Score is gamed, or wrong for unusual projects | Poor advice | Transparent components, an "insufficient data" state, and published misses |
 | Free-tier terms change | A component stops working | Keep the lake as the source of truth so any serving store can be replaced |
 | Events API history is short (300 events or 90 days) and a long outage loses events for busy repositories | Window metrics, retention in particular, are incomplete at launch or after a gap | One-time 6-month REST backfill; alert when a run is missed; re-run the REST backfill for any gap |
-| GitHub's public event feed changes again, or GH Archive stays sampled | Live scores undercount activity; history before the drop is complete but nothing after it is | Current activity comes from the Events API; the lake keeps every event; a volume check on each run alerts on a sudden fall; the backtest uses only the complete period |
+| GitHub's public event feed changes again | Live scores undercount activity | Current activity comes from the Events API; the lake keeps every event; a volume check on each run alerts on a sudden fall; the 6-month and backtest history come from GraphQL, not the feed |
 | Scope creep | Project never ships | Ship the Stage 3 MVP, then the graph, before anything new |
 
 ## 14. Data sources
 
 | Source | Provides | Limitation |
 | --- | --- | --- |
-| GH Archive | Every public GitHub event, in hourly files | Large; a few hours of delay. Measured 1 November 2026: recent hourly files hold under 1% of the events the Events API shows for the same repositories (file size held at about 80 to 150 MB through early October 2025, then fell to about 30 MB by mid-October 2025 and about 4 MB by October 2026), so it is not used for current activity |
+| GH Archive (evaluated, not used) | Every public GitHub event, in hourly files | Measured and rejected on 1 to 2 November 2026. Recent hourly files hold under 1% of the events the Events API shows for the same repositories, and an 8-hour check on 2025-09-16 found only about 49% of the pull requests GitHub reports opened (198 against 407) |
 | GitHub Events API | Recent events per repository | Rate limited; returns at most 300 events or 90 days per repository, so it cannot rebuild history. This is the source for current activity. The first full load of about 1,650 repositories uses most of an hour's 5,000 calls; later runs use ETags and cost little |
 | GitHub REST or GraphQL API | Repository metadata, archived flag, contributors | Rate limited |
 | PyPI | Releases, project URLs, licence field | Licence field is free text and often inconsistent |
@@ -348,7 +348,7 @@ The backtest tests whether the score would have warned about packages that were 
 
 ### 16.3 Terms and licensing
 
-- **Terms of use.** The project follows GitHub's API terms and rate limits, and the terms of GH Archive, deps.dev and OSV. Every data source is credited on the site.
+- **Terms of use.** The project follows GitHub's API terms and rate limits, and the terms of PyPI, deps.dev and OSV. Every data source is credited on the site.
 - **Licensing.** Code is published under Apache-2.0 (chosen 1 November 2026). Published package-level scores go under CC BY 4.0, with an attribution notice for GitHub, PyPI, deps.dev and OSV; the reasoning and the upstream terms are in [docs/data-licence.md](docs/data-licence.md). The raw lake contains GitHub usernames and is never published: the Hugging Face dataset that holds it stays private, and a separate public dataset carries only the derived package-level tables. Until that dataset exists nothing is published.
 
 ## 17. Open items
@@ -361,7 +361,8 @@ The backtest tests whether the score would have warned about packages that were 
 | Check deps.dev terms and quotas before bulk use | Stage 4 |
 | Verify each related-work tool's current features | Stage 7 |
 | Verify the current status of SBOM rules and the EU Cyber Resilience Act before quoting them | Stage 7 |
-| GH Archive completeness before October 2025: one check (8 hours on 2025-09-16, pull requests opened, 1,647 tracked repositories) found 198 events in the archive against 407 per GitHub's own search, about 49%, and only 89 of the 141 active repositories appeared at all. Repository renames may explain part of the gap, and the check covers one window and one event type. Decide whether Stage 6 builds the backtest from GraphQL history instead of the archive | Before Stage 6 |
+| Measure the GraphQL history cost for one backtest cutoff (the 6-month load took about 11,000 points, so nine cutoffs may need about 40,000 to 50,000, or 9 to 10 hourly allowances), and decide how to fetch by date range without exceeding the page caps | Before Stage 6 |
+| Find historical download counts to rebuild the tracked set at each cutoff (see definitions.md): the free rankings are current-only, so this likely needs the public PyPI downloads dataset on Google BigQuery, which needs a Google account and careful query sizing | Before Stage 6 |
 | Before publishing: email deps.dev about bulk use and quotas; create a separate public dataset for the derived tables (the raw lake stays private); add the licence and attribution notice from [docs/data-licence.md](docs/data-licence.md) to the dataset card and the README | Before the derived dataset or the dashboard goes public (at the latest the end of Stage 3) |
 | Pick a distinct GitHub repository name, such as `faultline-oss`, because a small CLI tool already uses the name, and check domains | Before the repository becomes public |
 
@@ -372,5 +373,4 @@ The backtest tests whether the score would have warned about packages that were 
 - [OpenSSF Scorecard](https://securityscorecards.dev)
 - [deps.dev](https://deps.dev)
 - [OSV](https://osv.dev)
-- [GH Archive](https://www.gharchive.org)
 - [CHAOSS](https://chaoss.community)
