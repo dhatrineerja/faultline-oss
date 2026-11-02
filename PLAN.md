@@ -322,7 +322,7 @@ The backtest tests whether the score would have warned about packages that were 
 | GitHub Events API | Recent events per repository | Rate limited; returns at most 300 events or 90 days per repository, so it cannot rebuild history. This is the source for current activity. The first full load of about 1,650 repositories uses most of an hour's 5,000 calls; later runs use ETags and cost little |
 | GitHub REST or GraphQL API | Repository metadata, archived flag, contributors | Rate limited |
 | PyPI | Releases, project URLs, licence field | Licence field is free text and often inconsistent |
-| deps.dev | Dependency graph, links, licences | Terms and API quotas to be checked before bulk use |
+| deps.dev | Dependency graph, links, licences | No quotas or bulk-use rules are stated; the Stage 4 load is small (about 2,000 packages). Send requests gently, cache results, and email depsdev@google.com only if blocked or if the tracked set grows far larger |
 | OSV | Vulnerability advisories by package and version | Coverage varies by ecosystem |
 
 ## 15. Project metrics
@@ -358,12 +358,12 @@ The backtest tests whether the score would have warned about packages that were 
 | Lock the definitions and the package selection rule in [docs/definitions.md](docs/definitions.md) | Stage 0 |
 | Confirm all free-tier limits, including Neon storage, in [docs/free-tier-limits.md](docs/free-tier-limits.md) | Stage 0 |
 | Confirm GitHub API rate limits and choose the refresh strategy | Stage 3 |
-| Check deps.dev terms and quotas before bulk use | Stage 4 |
+| Confirm the deps.dev load stays gentle (paced requests, cached results, slow down on rate-limit responses); email them only if blocked or if the tracked set grows far larger | Stage 4 |
 | Verify each related-work tool's current features | Stage 7 |
 | Verify the current status of SBOM rules and the EU Cyber Resilience Act before quoting them | Stage 7 |
 | Measure the GraphQL history cost for one backtest cutoff (the 6-month load took about 11,000 points, so nine cutoffs may need about 40,000 to 50,000, or 9 to 10 hourly allowances), and decide how to fetch by date range without exceeding the page caps | Before Stage 6 |
 | Find historical download counts to rebuild the tracked set at each cutoff (see definitions.md): the free rankings are current-only, so this likely needs the public PyPI downloads dataset on Google BigQuery, which needs a Google account and careful query sizing | Before Stage 6 |
-| Before publishing: email deps.dev about bulk use and quotas; create a separate public dataset for the derived tables (the raw lake stays private); add the licence and attribution notice from [docs/data-licence.md](docs/data-licence.md) to the dataset card and the README | Before the derived dataset or the dashboard goes public (at the latest the end of Stage 3) |
+| Before publishing: create a separate public dataset for the derived tables (the raw lake stays private); add the licence and attribution notice from [docs/data-licence.md](docs/data-licence.md) to the dataset card and the README | Before the derived dataset or the dashboard goes public (at the latest the end of Stage 3) |
 | Pick a distinct GitHub repository name, such as `faultline-oss`, because a small CLI tool already uses the name, and check domains | Before the repository becomes public |
 
 ## 18. References
