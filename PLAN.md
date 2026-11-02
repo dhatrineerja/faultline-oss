@@ -6,9 +6,9 @@
 | **Author and owner** | Dhatri Neerja |
 | **Version** | 1.1 |
 | **Date** | 2 November 2026 |
-| **Status** | Stage 0 done. Stage 1 pipeline built and loaded (Events API job on a 30-minute schedule, 6-month backfill uploaded); the 7-day run checkpoint is in progress. Stage 2 is next. |
+| **Status** | Stage 0 done. Stage 1 built and loaded (Events API job on a 30-minute schedule, 6-month backfill and PyPI history uploaded); its 7-day run checkpoint is in progress. Stage 2 built (dbt models, 29 tests, score v1); score coverage is 91.1% against the 95% target. Stage 3 is next. |
 
-Stage 1 is built; everything from Stage 2 onward is still a plan. Costs, limits and timelines for stages not yet built are planning estimates, and the items in [section 17](#17-open-items) must be confirmed before they are relied on. Version 1.1 changed the data sources after GH Archive was measured and found incomplete (see sections 9 and 14).
+Stages 1 and 2 are built; everything from Stage 3 onward is still a plan. Costs, limits and timelines for stages not yet built are planning estimates, and the items in [section 17](#17-open-items) must be confirmed before they are relied on. Version 1.1 changed the data sources after GH Archive was measured and found incomplete (see sections 9 and 14).
 
 ## Contents
 
@@ -216,7 +216,7 @@ Layer 8, Operations, spans the whole system: alerts, secrets management, CI and 
 | # | Layer | Responsibility | Key design choice | Repository location |
 | --- | --- | --- | --- | --- |
 | 1 | Sources | Events API for current activity, GitHub REST and GraphQL for the 6-month backfill, backtest history and metadata, PyPI and deps.dev dependencies and licences, OSV advisories | Public data only | `src/faultline/sources/` |
-| 2 | Ingestion | Three schedules: every 30 minutes (Events API, the source of current activity), daily (GitHub REST API metadata such as archived flag and contributors), weekly (deps.dev, OSV, PyPI metadata). GH Archive is used only for the Stage 6 backfill | Load only new data; filter to tracked repositories and needed columns at read time | `src/faultline/ingestion/`, `.github/workflows/` |
+| 2 | Ingestion | Three schedules: every 30 minutes (Events API, the source of current activity), daily (GitHub REST API metadata such as archived flag and contributors), weekly (PyPI metadata from Stage 2, then deps.dev and OSV from Stage 4). GH Archive is used only for the Stage 6 backfill | Load only new data; filter to tracked repositories and needed columns at read time | `src/faultline/ingestion/`, `.github/workflows/` |
 | 3 | Lake | Date- and hour-partitioned Parquet; raw downloads deleted after each run | The only source of truth; every other store can be rebuilt from it | `src/faultline/lake/` |
 | 4 | Transform and quality | dbt staging, intermediate and marts (daily metrics, health scores, graph edges); tests on every run | Each score row carries its formula version | `transform/` |
 | 5 | Graph compute | PageRank and transitive risk computed inside the pipeline and written back into the marts | Heavy graph work runs offline | `src/faultline/graph_compute/` |
@@ -257,7 +257,7 @@ Work proceeds through eight stages, and a stage starts only when the previous ch
 | --- | --- | --- | --- |
 | 0. Setup and definitions | Package list (about 2,000), repository mapping, metric definitions, "abandoned" definition, accounts and limits | Definitions committed before any data is examined; every free-tier limit confirmed in each dashboard | 1 |
 | 1. Ingestion pipeline | Events API job with ETags, a one-time REST or GraphQL backfill of the last 6 months of pull requests, issues, commits and releases for tracked repositories, early filtering, Parquet lake | The first full load completes across the rate limit; the 6-month backfill covers at least 95% of tracked repositories, with its call count measured and logged; 7 straight days of runs; re-running gives identical row counts; unchanged repositories cost no rate limit; raw files deleted | 1 to 2 |
-| 2. Models and score v1 | dbt staging and marts, tests, health score v1 with formula version | All dbt tests pass; score present for 95%+ of mapped packages; spot-check of 10 known packages looks sensible | 1 to 2 |
+| 2. Models and score v1 | PyPI release history load, dbt staging, intermediate and marts, tests, health score v1 with formula version | All dbt tests pass; score present for 95%+ of mapped packages; spot-check of 10 known packages looks sensible | 1 to 2 |
 | 3. Dashboard, live refresh, alerts (MVP) | Evidence site on Vercel, 30-minute job, failure alerts | Public URL; last-updated time shown; a deliberately broken run sends an alert and the site keeps the last good data | 1 |
 | 4. Knowledge graph (required) | deps.dev and OSV loads, Neo4j model, NetworkX PageRank and dependency risk | Transitive risk and blast-radius queries return for every tracked package; node and edge counts under 80% of the cap | 2 |
 | 5. Search and recommendation | fastembed embeddings in pgvector, FastAPI, filters, ranking, explanation templates | 20 written test queries return sensible top 3s; every explanation sentence traces to a score component | 2 |

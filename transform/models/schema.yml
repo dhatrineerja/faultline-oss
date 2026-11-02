@@ -1,0 +1,79 @@
+version: 2
+
+models:
+  - name: stg_packages
+    description: One row per tracked PyPI package and the GitHub repo it maps to.
+    columns:
+      - name: package
+        tests: [unique, not_null]
+      - name: repo
+        tests: [not_null]
+
+  - name: stg_gh_repos
+    description: One row per repo from the newest backfill snapshot, with flags for capped sections.
+    columns:
+      - name: repo
+        tests: [unique, not_null]
+      - name: is_archived
+        tests: [not_null]
+
+  - name: stg_gh_prs
+    description: Pull requests updated in the backfill window (newest snapshot).
+    columns:
+      - name: repo
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_gh_repos')
+                field: repo
+      - name: number
+        tests: [not_null]
+      - name: created_at
+        tests: [not_null]
+
+  - name: stg_gh_issues
+    description: Issues updated in the backfill window (newest snapshot).
+    columns:
+      - name: repo
+        tests:
+          - not_null
+          - relationships:
+              arguments:
+                to: ref('stg_gh_repos')
+                field: repo
+
+  - name: stg_gh_commits
+    description: Commits on the default branch in the backfill window (newest snapshot).
+    columns:
+      - name: oid
+        tests: [not_null]
+
+  - name: stg_pypi_packages
+    description: One row per tracked package from the newest PyPI snapshot.
+    columns:
+      - name: package
+        tests: [unique, not_null]
+
+  - name: int_params
+    description: The measurement windows, computed once. Exactly one row.
+
+  - name: health_score
+    description: >
+      Health score v1, one row per tracked package. Components are 0 to 100 percentiles in the
+      tracked set; each row carries the formula version and the date it was computed for.
+    columns:
+      - name: package
+        tests: [unique, not_null]
+      - name: formula_version
+        tests: [not_null]
+      - name: as_of
+        tests: [not_null]
+      - name: status
+        tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: [scored, dormant, insufficient_data, unmapped]
+      - name: n_components
+        tests: [not_null]

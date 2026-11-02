@@ -58,6 +58,21 @@ Set in the plan; repeated here so they are locked with the rest.
 - Tuning uses the first five cutoffs (2023-10-01 to 2024-10-01). Reported results use the last four (2025-01-01 to 2025-10-01) and the weights are not changed after that.
 - Warning line: the bottom 5% of scores at each cutoff. Every baseline is cut at the same 5%, so the comparison is fair.
 
+## Rules added while building the score (Stage 2)
+
+These fill gaps the data forced. They are all in `transform/dbt_project.yml` and the models, and every one is in the changelog below.
+
+- **Dormant status.** A package with no human merge or release in the current window and a known PyPI release date is scored from the components that exist and marked `dormant`, because silence is the finding. Added after the first run showed that the "fewer than 3 components" rule hid 448 inactive packages as "insufficient data". The rule was chosen on that reasoning, not by tuning to scores.
+- **Minimum samples** (set before the first run, not tuned): pull-request flow needs 5 PRs, responsiveness 5 items, contributor retention 3 contributors in the earlier window, bus factor 10 commits.
+- **Missing graph terms.** Until Stage 4, dependency risk and open vulnerabilities do not exist. The weights of the components that do exist are rescaled to add up to 100, and `graph_terms_included` is false.
+- **Triage is not counted.** The backfill holds no record of who labelled or closed an item, so maintainer activity counts people who merged a pull request or published a release. Revisit when the data allows.
+- **Bus factor window.** The backfill holds about 6 months of commits, so bus factor is measured over those, not 12 months.
+- **Responsiveness uses the first three comments and reviews.** An item whose first maintainer reply came later is left out, so the measure is slightly optimistic.
+- **Capped repositories.** If a repo hit a page cap in the backfill, a window older than the oldest item fetched is not measured for that repo, and the component is left empty.
+- **Bots.** Excluded using `transform/seeds/bots.csv` plus names ending in `[bot]` or `-bot`, because GraphQL returns bot logins without the `[bot]` suffix.
+- **Ranking.** Repo-level components are ranked across repositories, so a monorepo's many packages do not count many times. Release recency is ranked across packages.
+- **Windows.** The score is computed as of the newest backfill snapshot date. The current window is the 90 days up to the end of that day.
+
 ## Language
 
 Maintainer concentration is a property of a package, never a ranking of people. Say "needs support" or "low recent activity" on anything public.
@@ -68,3 +83,5 @@ Maintainer concentration is a property of a package, never a ranking of people. 
 | --- | --- | --- |
 | 2026-11-01 | v1 | Initial definitions; all open items decided |
 | 2026-11-01 | v1 | Tracked set ranked by 30-day downloads instead of 90-day, because only a 30-day ranking is freely available. Changed before any data was examined. |
+| 2026-11-02 | v1 | Stage 2 rules added: minimum samples, graph-term rescaling, triage not counted, 6-month bus factor, first-three-replies responsiveness, cap handling, bot list, ranking and window rules. Decided before the first score run. |
+| 2026-11-02 | v1 | Dormant status added after the first run showed 448 inactive packages hidden as insufficient data. Chosen on the principle that silence is a measurement; no weight or threshold was changed. |
