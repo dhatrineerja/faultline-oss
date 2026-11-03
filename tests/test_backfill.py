@@ -23,3 +23,18 @@ def test_write_shard_overwrites_rather_than_appends(tmp_path):
     files = list((tmp_path / "backfill" / "releases").rglob("*.parquet"))
     assert len(files) == 1
     assert pq.read_table(files[0]).num_rows == 1
+
+
+def test_replace_repos_swaps_only_the_named_repos():
+    from faultline.ingestion.backfill import SCHEMAS, replace_repos
+
+    old = {t: [] for t in SCHEMAS}
+    old["prs"] = [{"tracked_repo": "a/a", "number": 1}, {"tracked_repo": "b/b", "number": 2}]
+    new = {t: [] for t in SCHEMAS}
+    new["prs"] = [{"tracked_repo": "a/a", "number": 1}, {"tracked_repo": "a/a", "number": 3}]
+    merged = replace_repos(old, new, {"a/a"})
+    assert sorted((r["tracked_repo"], r["number"]) for r in merged["prs"]) == [
+        ("a/a", 1),
+        ("a/a", 3),
+        ("b/b", 2),
+    ]

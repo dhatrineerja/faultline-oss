@@ -26,6 +26,10 @@ To fill the window, repeat the 6-month backfill:
 2. Run `python -m faultline.ingestion.backfill --upload` once an hour until it prints "all shards done". The GraphQL allowance is 5,000 points an hour and the full run needs about 11,000.
 3. Re-run `dbt run` and `dbt test` in `transform/`.
 
+## Repos cut short by the page cap
+
+After a backfill, `python -m faultline.ingestion.backfill --deepen --upload` fetches again, with a much higher page cap, every repo that hit the normal cap, and swaps its rows into the existing files. Progress is saved in `state/backfill_deep.json`, so it can be stopped and restarted; it pauses itself when fewer than 1,500 GraphQL points are left. The first run (38 repos) took about 6 hours and cost roughly 3,000 points.
+
 ## Refreshing PyPI history
 
 `python -m faultline.ingestion.pypi_metadata` reloads every tracked package's releases and Inactive flag in about 35 seconds and replaces that day's snapshot. Run it before computing scores if the last snapshot is older than a week.

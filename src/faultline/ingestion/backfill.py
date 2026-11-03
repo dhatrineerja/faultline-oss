@@ -25,6 +25,10 @@ SHARD_SIZE = 50
 MIN_RATE_LEFT = 600  # a shard of 50 busy repos can cost several hundred points
 WORKERS = 6
 WINDOW_DAYS = 183
+# Second pass for the repos that hit the normal page cap (pandas, torch, airflow and similar).
+DEEP_PAGE_CAP = {"prs": 400, "issues": 400, "commits": 300}  # 20,000 / 20,000 / 30,000 items
+DEEP_WORKERS = 3
+DEEP_MIN_RATE_LEFT = 1500  # a very busy repo can cost over a thousand points on its own
 
 SCHEMAS = {
     "repos": pa.schema(
@@ -99,14 +103,17 @@ def _comments(node: dict | None) -> str:
     return json.dumps(items, separators=(",", ":"))
 
 
-def backfill_repo(client, repo: str, since: str) -> tuple[dict[str, list[dict]], int | None]:
+def backfill_repo(
+    client, repo: str, since: str, caps: dict[str, int] | None = None
+) -> tuple[dict[str, list[dict]], int | None]:
+    caps = caps or {}
     rows: dict[str, list[dict]] = {t: [] for t in SCHEMAS}
     info, remaining = repo_info(client, repo)
     if info is None:
         return rows, remaining
-    prs = fetch_section(client, repo, "prs", since)
-    issues = fetch_section(client, repo, "issues", since)
-    commits = fetch_section(client, repo, "commits", since)
+    prs = fetch_section(client, repo, "prs", since, caps.get("prs"))
+    issues = fetch_section(client, repo, "issues", since, caps.get("issues"))
+    commits = fetch_section(client, repo, "commits", since, caps.get("commits"))
     rows["repos"].append(
         {
             "tracked_repo": repo,
@@ -189,6 +196,85 @@ def write_shard(root: Path, snapshot: str, shard: int, rows: dict[str, list[dict
     return paths
 
 
+def shard_path(root: Path, snapshot: str, table: str, shard: int) -> Path:
+    return root / "backfill" / table / f"snapshot={snapshot}" / f"shard-{shard:04d}.parquet"
+
+
+def replace_repos(
+    old: dict[str, list[dict]], new: dict[str, list[dict]], repos: set[str]
+) -> dict[str, list[dict]]:
+    """Drop every row of the given repos from a shard and put the fresh rows in their place."""
+    return {t: [r for r in old[t] if r["tracked_repo"] not in repos] + new[t] for t in SCHEMAS}
+
+
+def truncated_repos(root: Path, snapshot: str) -> list[str]:
+    out = []
+    for path in sorted(shard_path(root, snapshot, "repos", 0).parent.glob("shard-*.parquet")):
+        for r in pq.read_table(path).to_pylist():
+            if r["prs_truncated"] or r["issues_truncated"] or r["commits_truncated"]:
+                out.append(r["tracked_repo"])
+    return out
+
+
+def deepen(root: Path, upload: bool = False) -> None:
+    """Re-fetch the repos that hit the page cap with a much higher cap and swap their rows in."""
+    state_path = root.parent / "state" / "backfill.json"
+    deep_path = root.parent / "state" / "backfill_deep.json"
+    if upload:
+        for p in (state_path, deep_path):
+            if not p.exists():
+                fetch(f"state/{p.name}", root.parent)  # False on a first run: no deep state yet
+    state = json.loads(state_path.read_text(encoding="utf-8"))
+    snapshot, since = state["snapshot"], state["since"]
+    deep = json.loads(deep_path.read_text(encoding="utf-8")) if deep_path.exists() else {}
+    done = set(deep.get("done", []))
+    order = {r: i for i, r in enumerate(tracked_repos())}
+    todo = [r for r in truncated_repos(root, snapshot) if r not in done]
+    print(f"{len(done)} repos already deepened; {len(todo)} to do", file=sys.stderr)
+
+    with make_client() as client:
+        for start in range(0, len(todo), DEEP_WORKERS):
+            batch = todo[start : start + DEEP_WORKERS]
+            with ThreadPoolExecutor(DEEP_WORKERS) as pool:
+                results = list(
+                    pool.map(lambda r: backfill_repo(client, r, since, DEEP_PAGE_CAP), batch)
+                )
+            fetched = {
+                r: rows for r, (rows, _) in zip(batch, results, strict=True) if rows["repos"]
+            }
+            by_shard: dict[int, list[str]] = {}
+            for repo in fetched:
+                by_shard.setdefault(order[repo] // SHARD_SIZE, []).append(repo)
+            for shard, repos in by_shard.items():
+                old = {
+                    t: pq.read_table(shard_path(root, snapshot, t, shard)).to_pylist()
+                    for t in SCHEMAS
+                }
+                new = {t: [x for r in repos for x in fetched[r][t]] for t in SCHEMAS}
+                paths = write_shard(root, snapshot, shard, replace_repos(old, new, set(repos)))
+                if upload:
+                    items = [(p, p.relative_to(root).as_posix()) for p in paths]
+                    upload_batch(items, f"deepen shard {shard}")
+            done.update(batch)
+            deep_path.write_text(json.dumps({"done": sorted(done)}), encoding="utf-8")
+            if upload:
+                upload_batch([(deep_path, "state/backfill_deep.json")], "deepen state")
+            remaining = min((r for _, r in results if r is not None), default=None)
+            for repo, f in fetched.items():
+                flags = f["repos"][0]
+                print(
+                    f"{repo}: {len(f['prs'])} PRs, {len(f['issues'])} issues, "
+                    f"{len(f['commits'])} commits; still cut short: "
+                    f"{[k for k in ('prs', 'issues', 'commits') if flags[k + '_truncated']]}",
+                    file=sys.stderr,
+                )
+            print(f"allowance left {remaining}", file=sys.stderr)
+            if remaining is not None and remaining < DEEP_MIN_RATE_LEFT:
+                print("stopped: allowance low; re-run after it resets", file=sys.stderr)
+                return
+    print("all truncated repos deepened")
+
+
 def run(root: Path, limit_shards: int | None, upload: bool = False) -> None:
     now = datetime.now(UTC)
     snapshot = now.date().isoformat()
@@ -244,10 +330,16 @@ def run(root: Path, limit_shards: int | None, upload: bool = False) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit-shards", type=int, help="process at most N shards (testing)")
+    parser.add_argument(
+        "--deepen", action="store_true", help="second pass for repos that hit the page cap"
+    )
     parser.add_argument("--upload", action="store_true", help="also commit to the HF dataset")
     args = parser.parse_args()
     load_dotenv()
-    run(lake_dir(), args.limit_shards, args.upload)
+    if args.deepen:
+        deepen(lake_dir(), args.upload)
+    else:
+        run(lake_dir(), args.limit_shards, args.upload)
 
 
 if __name__ == "__main__":

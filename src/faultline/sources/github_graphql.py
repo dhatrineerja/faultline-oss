@@ -88,12 +88,17 @@ def repo_info(client: httpx.Client, repo: str) -> tuple[dict | None, int | None]
     return _post(client, query, {"owner": owner, "name": name})
 
 
-def fetch_section(client: httpx.Client, repo: str, kind: str, since: str) -> Section:
-    """kind is prs, issues or commits. since is an ISO timestamp; older items are dropped."""
+def fetch_section(
+    client: httpx.Client, repo: str, kind: str, since: str, page_cap: int | None = None
+) -> Section:
+    """kind is prs, issues or commits. since is an ISO timestamp; older items are dropped.
+
+    page_cap overrides the default cap for the repos that were cut short the first time.
+    """
     owner, name = repo.split("/")
     out = Section()
     after = None
-    for _ in range(PAGE_CAP[kind]):
+    for _ in range(page_cap or PAGE_CAP[kind]):
         if kind == "commits":
             body = (
                 "defaultBranchRef{target{... on Commit{history(since:$since, first:100, "
