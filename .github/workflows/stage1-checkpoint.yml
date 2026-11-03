@@ -1,13 +1,13 @@
 name: stage1-checkpoint
 
 # One-off measurement of the Stage 1 "7 straight days of runs" checkpoint.
-# Runs on the morning of 8 November 2026 (09:00 India time), appends the report to
+# Runs on the morning of 9 November 2026 (09:00 India time; the 7 days end at 19:50 UTC on 8 November), appends the report to
 # docs/stage-1-checkpoint.md and commits it. It only records the result: it does not
 # change the criteria or close the checkpoint. Can also be started by hand from the Actions tab.
 # Uses the same three repository secrets as the refresh workflow.
 on:
   schedule:
-    - cron: "30 3 8 11 *"
+    - cron: "30 3 9 11 *"
   workflow_dispatch:
 
 permissions:
@@ -20,7 +20,7 @@ concurrency:
 jobs:
   measure:
     # A yearly cron cannot name a year, so ignore any run after 2026.
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.schedule, '30 3 8 11') && github.run_started_at < '2027-01-01'
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.schedule, '30 3 9 11') && github.run_started_at < '2027-01-01'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

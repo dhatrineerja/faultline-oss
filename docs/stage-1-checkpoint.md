@@ -44,7 +44,7 @@ It reads the run history from GitHub (public), and the saved run records and sto
 
 ## What to do with the result
 
-- **Everything passes after 8 November 2026:** record the report below as the final entry, mark the table above as met, and close the Stage 1 checkpoint in the plan.
+- **Everything passes after 19:50 UTC on 8 November 2026 (the automatic check runs on the morning of 9 November):** record the report below as the final entry, mark the table above as met, and close the Stage 1 checkpoint in the plan.
 - **Runs were skipped or late but nothing failed:** this is the known GitHub schedule risk (section 13 of the plan). Look at the longest quiet stretch and at the gap count. If gaps exist, follow "After a long outage" in [ops/runbook.md](../ops/runbook.md).
 - **A run failed:** open it on the Actions tab, fix the cause, and restart the week from the next successful run, as the plan says "straight".
 
