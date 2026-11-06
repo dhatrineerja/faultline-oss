@@ -70,7 +70,8 @@ jobs:
           HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
         run: |
           if [ -z "$HEALTHCHECK_URL" ]; then echo "HEALTHCHECK_URL is not set; no heartbeat sent"; exit 0; fi
-          curl -fsS -m 20 --retry 3 "$HEALTHCHECK_URL" > /dev/null
+          # A bad URL must never fail the load itself, so a failed ping only warns.
+          curl -fsS -m 20 --retry 3 "$HEALTHCHECK_URL" > /dev/null || echo "::warning::heartbeat ping failed; check HEALTHCHECK_URL"
       - name: Report a failed run to the heartbeat
         if: failure()
         env:
