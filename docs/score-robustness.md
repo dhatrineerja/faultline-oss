@@ -32,17 +32,21 @@ A control run with nothing changed reproduced the baseline on all 1,996 rows.
 
 ## Is the bottom 5% just a recency list? (checked 2026-11-06)
 
-The bottom 5% is 99 packages. It was compared with the 99 worst packages under three single measures, using the 49 packages that are archived or marked Inactive as a rough stand-in for "abandoned". That stand-in describes today, not the future, and an archived repo scores low almost by definition, so it only shows how the lists differ, not whether the score predicts. Ties were broken at random, 200 times.
+The bottom 5% is 99 packages. It was compared with the 99 worst packages under four single measures, using the 49 packages that are archived or marked Inactive as a rough stand-in for "abandoned". That stand-in describes today, not the future, and it favours recency measures: an archived repo has stopped committing by definition. So this shows how the lists differ, not whether the score predicts. Ties were broken at random, 200 times; the score's own count moves by one between runs.
+
+The last-commit row uses each repo's real last commit date, fetched once for all repos (`repo_meta` job). An earlier version of this table used only the six-month backfill, where 388 repos had no commit and tied; it wrongly made the score look better than last commit.
 
 | Warning list (99 packages) | Overlap with the score's list | Archived or Inactive caught (of 49) |
 | --- | --- | --- |
-| Score, bottom 5% | 1.00 | 16 |
+| Score, bottom 5% | 1.00 | 15 |
+| Oldest last commit (full history) | 0.57 | 19 |
 | Oldest PyPI release | 0.75 | 11 |
-| Oldest last commit | 0.14 | 9 |
+| Fewest stars | 0.06 | 2 |
 | Fewest people who merged or released in 90 days | 0.09 | 8 |
 
-- The score's list is mostly the packages with the oldest PyPI release: 75% overlap, and the median release age is 2,192 days (about six years) against 517 for other dormant packages. So the worry is partly right: the list leans heavily on release age.
-- It is not only release age. A quarter of the list differs, and it caught 16 of the 49 against 11 for release age alone. These are small numbers on a weak stand-in, so this is a hint, not a result.
-- The last-commit baseline is weak here by construction: the backfill holds six months of commits, and 388 repos have none in that window, so many are tied. A fair version needs each repo's real last commit date, which is one cheap call per repo.
+- **On this stand-in the score does not beat last commit alone** (15 against 19). This is the result to take seriously. It may be an artefact of the stand-in, but nothing here shows the score adding value over a simple recency measure.
+- The score's list overlaps 57% with the oldest last commits and 75% with the oldest releases. It is largely a recency list, as feared.
+- Stars alone are nearly useless here (2 of 49), which supports using stars only as a weak baseline.
+- The real test is Stage 6: outcomes after each cutoff, with every baseline built only from data before that cutoff. If the score cannot beat last commit there, the report must say so.
 
-What this changes for Stage 6: "oldest release alone" is added as a baseline next to stars, last commit and Scorecard, and the report must show what the score adds over it. The last-commit baseline must use full history.
+What this changes for Stage 6: "oldest release alone" is added as a baseline next to stars, last commit and Scorecard, and the report must show what the score adds over each. The last-commit baseline uses full history.
