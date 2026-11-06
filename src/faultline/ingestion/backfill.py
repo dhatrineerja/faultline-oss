@@ -216,8 +216,14 @@ def truncated_repos(root: Path, snapshot: str) -> list[str]:
     return out
 
 
-def deepen(root: Path, upload: bool = False) -> None:
-    """Re-fetch the repos that hit the page cap with a much higher cap and swap their rows in."""
+def deepen(
+    root: Path, upload: bool = False, only: list[str] | None = None, pages: int | None = None
+) -> None:
+    """Re-fetch the repos that hit the page cap with a much higher cap and swap their rows in.
+
+    only names repos to redo even if already deepened, and pages sets their cap for PRs and issues
+    (commits get three quarters of it), for the few that were still cut short at the usual cap.
+    """
     state_path = root.parent / "state" / "backfill.json"
     deep_path = root.parent / "state" / "backfill_deep.json"
     if upload:
@@ -229,16 +235,21 @@ def deepen(root: Path, upload: bool = False) -> None:
     deep = json.loads(deep_path.read_text(encoding="utf-8")) if deep_path.exists() else {}
     done = set(deep.get("done", []))
     order = {r: i for i, r in enumerate(tracked_repos())}
-    todo = [r for r in truncated_repos(root, snapshot) if r not in done]
+    caps = (
+        DEEP_PAGE_CAP if not pages else {"prs": pages, "issues": pages, "commits": pages * 3 // 4}
+    )
+    todo = (
+        [r.lower() for r in only]
+        if only
+        else [r for r in truncated_repos(root, snapshot) if r not in done]
+    )
     print(f"{len(done)} repos already deepened; {len(todo)} to do", file=sys.stderr)
 
     with make_client() as client:
         for start in range(0, len(todo), DEEP_WORKERS):
             batch = todo[start : start + DEEP_WORKERS]
             with ThreadPoolExecutor(DEEP_WORKERS) as pool:
-                results = list(
-                    pool.map(lambda r: backfill_repo(client, r, since, DEEP_PAGE_CAP), batch)
-                )
+                results = list(pool.map(lambda r: backfill_repo(client, r, since, caps), batch))
             fetched = {
                 r: rows for r, (rows, _) in zip(batch, results, strict=True) if rows["repos"]
             }
@@ -330,6 +341,8 @@ def run(root: Path, limit_shards: int | None, upload: bool = False) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--limit-shards", type=int, help="process at most N shards (testing)")
+    parser.add_argument("--only", nargs="+", help="with --deepen: redo just these repos")
+    parser.add_argument("--pages", type=int, help="with --deepen: page cap for PRs and issues")
     parser.add_argument(
         "--deepen", action="store_true", help="second pass for repos that hit the page cap"
     )
@@ -337,7 +350,7 @@ def main() -> None:
     args = parser.parse_args()
     load_dotenv()
     if args.deepen:
-        deepen(lake_dir(), args.upload)
+        deepen(lake_dir(), args.upload, args.only, args.pages)
     else:
         run(lake_dir(), args.limit_shards, args.upload)
 
