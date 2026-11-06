@@ -29,3 +29,20 @@ A control run with nothing changed reproduced the baseline on all 1,996 rows.
 - Maintainer activity carries the score. Dropping it is the only change that moves the bottom 5% noticeably.
 - **The bottom 5% (99 packages) is almost entirely dormant: 93 dormant, 97 low confidence, 2 normal.** That list is what the backtest will use as its warning line. If it is mostly "no human merge or release in 90 days", it may do little more than last-commit recency, one of the baselines. This is the main risk for Stage 6 and should be checked first.
 - Percentiles are ranked within the tracked set, so a score is relative to these 2,000 packages.
+
+## Is the bottom 5% just a recency list? (checked 2026-11-06)
+
+The bottom 5% is 99 packages. It was compared with the 99 worst packages under three single measures, using the 49 packages that are archived or marked Inactive as a rough stand-in for "abandoned". That stand-in describes today, not the future, and an archived repo scores low almost by definition, so it only shows how the lists differ, not whether the score predicts. Ties were broken at random, 200 times.
+
+| Warning list (99 packages) | Overlap with the score's list | Archived or Inactive caught (of 49) |
+| --- | --- | --- |
+| Score, bottom 5% | 1.00 | 16 |
+| Oldest PyPI release | 0.75 | 11 |
+| Oldest last commit | 0.14 | 9 |
+| Fewest people who merged or released in 90 days | 0.09 | 8 |
+
+- The score's list is mostly the packages with the oldest PyPI release: 75% overlap, and the median release age is 2,192 days (about six years) against 517 for other dormant packages. So the worry is partly right: the list leans heavily on release age.
+- It is not only release age. A quarter of the list differs, and it caught 16 of the 49 against 11 for release age alone. These are small numbers on a weak stand-in, so this is a hint, not a result.
+- The last-commit baseline is weak here by construction: the backfill holds six months of commits, and 388 repos have none in that window, so many are tied. A fair version needs each repo's real last commit date, which is one cheap call per repo.
+
+What this changes for Stage 6: "oldest release alone" is added as a baseline next to stars, last commit and Scorecard, and the report must show what the score adds over it. The last-commit baseline must use full history.

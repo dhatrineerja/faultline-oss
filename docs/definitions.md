@@ -51,7 +51,7 @@ Set in the plan; repeated here so they are locked with the rest.
 
 - Score only with data from before a cutoff, then check the next 6 to 12 months.
 - Use rolling cutoffs (for example every quarter over two years). Tune weights on early cutoffs only and report on later ones.
-- Baselines: stars alone, last-commit recency alone, OpenSSF Scorecard.
+- Baselines: stars alone, last-commit recency alone (from the full history, not the six-month backfill), release recency alone, OpenSSF Scorecard.
 - Report precision and recall for each, precision at a fixed alert budget (for example the bottom 5% of scores), PR-AUC, lead time, and the score with and without the dependency-risk term.
 
 - Cutoffs: quarterly, nine in all, from 2023-10-01 to 2025-10-01. Each is judged on a 12-month outcome window, which has fully closed for the last cutoff.
@@ -88,3 +88,4 @@ Maintainer concentration is a property of a package, never a ranking of people. 
 | 2026-11-02 | v1 | Dormant status added after the first run showed 448 inactive packages hidden as insufficient data. Chosen on the principle that silence is a measurement; no weight or threshold was changed. |
 | 2026-11-02 | v1 | Packages with exactly two components (maintainer activity and release recency) are now scored and labelled low confidence; a `confidence` column was added. Chosen after seeing that 178 quiet projects were unscored, and checked on a rank correlation with the other components (0.56 to 0.63). Coverage 91.1% to 98.0%. No weight or minimum sample changed. |
 | 2026-11-06 | v1 | Bug fix, no rule change: release recency now uses the latest non-yanked release before the as_of day. Before, 21 packages whose newest release came after that day got no recency value at all. Two of them (imageio-ffmpeg, langsmith) are now scored. |
+| 2026-11-06 | v1 | Backtest baseline added: release recency alone, because the score's bottom 5% overlaps 75% with the oldest PyPI releases. Last-commit baseline must use full history. A stricter test, added before any backtest was run; no score rule changed. |

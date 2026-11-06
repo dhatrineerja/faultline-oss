@@ -286,7 +286,7 @@ The backtest tests whether the score would have warned about packages that were 
 
 1. Define "abandoned" before examining results, for example archived, deprecated, or no release or commit for 12 months.
 2. Score only with data from before a cutoff date, then check the next 6 to 12 months. Later data must never leak into the score.
-3. Compare against three baselines: stars alone, last-commit recency alone, and the OpenSSF Scorecard score. Report precision and recall for each.
+3. Compare against four baselines: stars alone, last-commit recency alone (from full history), release recency alone, and the OpenSSF Scorecard score. Report precision and recall for each.
 4. Show the graph's contribution by reporting the score with and without the dependency-risk term.
 5. Report misses and false alarms.
 
