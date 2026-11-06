@@ -45,3 +45,6 @@ dashboard/.evidence/
 Thumbs.db
 desktop.ini
 transform/.user.yml
+
+# Vercel link folder (project and org ids)
+.vercel/
