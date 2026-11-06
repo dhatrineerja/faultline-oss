@@ -359,6 +359,7 @@ The backtest tests whether the score would have warned about packages that were 
 | Confirm all free-tier limits, including Neon storage, in [docs/free-tier-limits.md](docs/free-tier-limits.md) | Stage 0 |
 | Confirm GitHub API rate limits and choose the refresh strategy | Stage 3 |
 | Confirm the deps.dev load stays gentle (paced requests, cached results, slow down on rate-limit responses); email them only if blocked or if the tracked set grows far larger | Stage 4 |
+| Phone alerts for failed or missing runs (Slack, Discord or Telegram message, or the healthchecks.io app). Email alerts are live; this adds a push to the phone and needs a webhook URL or app set up by the owner | After Stage 3 |
 | Verify each related-work tool's current features | Stage 7 |
 | Verify the current status of SBOM rules and the EU Cyber Resilience Act before quoting them | Stage 7 |
 | Measure the GraphQL history cost for one backtest cutoff (the 6-month load took about 11,000 points, so nine cutoffs may need about 40,000 to 50,000, or 9 to 10 hourly allowances), and decide how to fetch by date range without exceeding the page caps | Before Stage 6 |
