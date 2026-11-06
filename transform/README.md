@@ -10,6 +10,6 @@ dbt on DuckDB: `staging`, then `intermediate`, then `marts` (daily metrics, heal
 | intermediate | `int_params` (windows), `int_coverage`, `int_people_events`, and one model per component: `int_maintainer_activity`, `int_contributor_retention`, `int_responsiveness`, `int_pr_flow`, `int_bus_factor`, `int_release_recency` |
 | marts | `health_score`, one row per tracked package, with status `scored`, `dormant`, `insufficient_data` or `unmapped`, and a `confidence` of `normal` (four or more components) or `low` |
 
-Weights and thresholds are in `dbt_project.yml`; a Python test checks they equal `config/score_v1.toml`. The rules behind each component are in [docs/definitions.md](../docs/definitions.md).
+CI runs `dbt parse` only (no lake there); run `dbt test` here before changing a model. Weights and thresholds are in `dbt_project.yml`; a Python test checks they equal `config/score_v1.toml`. The rules behind each component are in [docs/definitions.md](../docs/definitions.md).
 
 **Done when:** tests cover keys, nulls, ranges and freshness, and a failing test blocks publish.

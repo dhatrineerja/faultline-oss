@@ -14,6 +14,10 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - run: pip install -e ".[pipeline,dev]"
-      - run: ruff check src tests
+      - run: pip install -e ".[pipeline,dev,transform]"
+      - run: ruff check src tests ops
       - run: pytest -q
+      # No lake in CI, so this checks that every model, test and macro still compiles; the data
+      # tests run where the lake is (see transform/README.md).
+      - run: dbt parse --profiles-dir .
+        working-directory: transform
