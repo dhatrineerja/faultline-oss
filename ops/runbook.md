@@ -8,6 +8,12 @@ Steps for keeping the pipeline running. Run commands from the repository root wi
 2. For a full report over the week, run `python ops/check_stage1.py`. It lists runs, failures, the longest quiet stretch, rate-limit headroom, repos with gaps and a duplicate check. How to read it is in [docs/stage-1-checkpoint.md](../docs/stage-1-checkpoint.md).
 3. Each run also saves a record in the lake under `metrics/events_api/`, with the counts, the rate-limit headroom, and the lists of missing, failed and gapped repos.
 
+## Alerts
+
+- **A failed run:** GitHub emails the account that last edited the workflow. Check Settings, Notifications, Actions on GitHub: email on, "failed workflows only".
+- **A run that never happens:** the refresh pings a healthchecks.io check (`HEALTHCHECK_URL` secret) after every good run, and the check alerts by email when no ping arrives within its period plus grace. A failed run also reports itself to the check. Without the secret the ping step is skipped and says so in the log.
+- **Setting:** period 3 hours and grace 3 hours, so an alert means about 6 hours without a good run, the same limit the Stage 1 checkpoint uses. Revisit it with the 6-hour rule.
+
 ## Re-running a failed refresh
 
 The refresh is safe to repeat. Events are merged into hourly partitions by event id, and the per-repo state is saved only after the data is stored, so a failed run changes nothing and the next run picks up where it left off.

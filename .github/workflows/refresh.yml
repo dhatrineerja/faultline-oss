@@ -4,6 +4,8 @@ name: refresh
 #   GH_API_TOKEN     personal access token (the built-in GITHUB_TOKEN allows only 1,000 calls an hour)
 #   HF_TOKEN         Hugging Face write token
 #   HF_DATASET_REPO  dataset id, for example yourname/faultline-lake
+#   HEALTHCHECK_URL  optional: ping URL of the heartbeat check (healthchecks.io). A good run pings it;
+#                    it alerts when no ping arrives in time, which catches runs that never start.
 on:
   schedule:
     - cron: "*/30 * * * *"
@@ -61,3 +63,17 @@ jobs:
             sleep 60
           done
           exit 1
+      # Heartbeat. A run that never starts sends nothing, so silence is what raises the alert.
+      - name: Ping the heartbeat after a good run
+        if: success()
+        env:
+          HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
+        run: |
+          if [ -z "$HEALTHCHECK_URL" ]; then echo "HEALTHCHECK_URL is not set; no heartbeat sent"; exit 0; fi
+          curl -fsS -m 20 --retry 3 "$HEALTHCHECK_URL" > /dev/null
+      - name: Report a failed run to the heartbeat
+        if: failure()
+        env:
+          HEALTHCHECK_URL: ${{ secrets.HEALTHCHECK_URL }}
+        run: |
+          if [ -n "$HEALTHCHECK_URL" ]; then curl -fsS -m 20 --retry 3 "$HEALTHCHECK_URL/fail" > /dev/null || true; fi
