@@ -42,6 +42,10 @@ To fill the window, repeat the 6-month backfill:
 2. Run `python -m faultline.ingestion.backfill --upload` once an hour until it prints "all shards done". The GraphQL allowance is 5,000 points an hour and the full run needs about 11,000.
 3. Re-run `dbt run` and `dbt test` in `transform/`.
 
+## Merged-PR top-up
+
+`python -m faultline.ingestion.topup [--no-upload] [--limit N]` runs after every events load (a non-fatal step in `refresh.yml`; a failure shows as a warning annotation and the repos are retried next run). It downloads the event days since its watermark, finds repos with merge events, and writes their recently merged pull requests, with the real merger, to `merged_prs/`. State is `state/topup.json` (watermark, last fetch per repo, repos to retry). Cost is about 1 GraphQL point per page: the first catch-up (679 repos, 14,853 merged PRs) used about 630 points. A repo listed under `cut_short_repos` in the run record hit 20 pages (1,000 PRs) and needs a look. To redo from scratch, delete `state/topup.json` and `merged_prs/` from the dataset; the first run then reaches back to 31 October.
+
 ## Repos cut short by the page cap
 
 After a backfill, `python -m faultline.ingestion.backfill --deepen --upload` fetches again, with a much higher page cap, every repo that hit the normal cap, and swaps its rows into the existing files. Progress is saved in `state/backfill_deep.json`, so it can be stopped and restarted; it pauses itself when fewer than 1,500 GraphQL points are left. The first run (38 repos) took about 6 hours and cost roughly 3,000 points.

@@ -137,3 +137,40 @@ def fetch_section(
         after = conn["pageInfo"]["endCursor"]
     out.truncated = True
     return out
+
+
+MERGED_CONNECTION = (
+    "pullRequests(states:MERGED, first:50, after:$after, "
+    "orderBy:{field:UPDATED_AT, direction:DESC})"
+)
+MERGED_FIELDS = "number mergedAt updatedAt author{login} mergedBy{login}"
+
+
+def fetch_merged_prs(client: httpx.Client, repo: str, since: str, page_cap: int = 20) -> Section:
+    """Merged pull requests updated at or after `since`, newest-updated first.
+
+    A pull request is updated at least when it is merged, so stopping at the first one updated
+    before `since` cannot skip a merge that happened after `since`. Cheaper than the backfill:
+    no comments, reviews, issues or commits, and one page for most repos.
+    """
+    owner, name = repo.split("/")
+    out = Section()
+    after = None
+    body = f"{MERGED_CONNECTION}{{pageInfo{{hasNextPage endCursor}} nodes{{{MERGED_FIELDS}}}}}"
+    query = QUERY % {"extra_vars": ", $after:String", "body": body}
+    for _ in range(page_cap):
+        repository, remaining = _post(
+            client, query, {"owner": owner, "name": name, "after": after}
+        )
+        out.rate_remaining = remaining
+        if repository is None:
+            out.missing = True
+            return out
+        conn = repository["pullRequests"]
+        fresh = [n for n in conn["nodes"] if n["updatedAt"] >= since]
+        out.nodes.extend(fresh)
+        if len(fresh) < len(conn["nodes"]) or not conn["pageInfo"]["hasNextPage"]:
+            return out
+        after = conn["pageInfo"]["endCursor"]
+    out.truncated = True
+    return out

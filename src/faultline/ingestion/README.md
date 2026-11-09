@@ -5,6 +5,7 @@ Job entry points called by GitHub Actions. Load only new data, and filter to tra
 | Schedule | Pulls | Stage |
 | --- | --- | --- |
 | Every 30 min | Events API for tracked repos (`events_api.py`), via `.github/workflows/refresh.yml` | 1 |
+| Every 30 min, after the events load | Merged pull requests with the real merger, for repos that had a merge event (`topup.py`); non-fatal step in `refresh.yml` | 3 |
 | Once, then on gaps | 6-month GraphQL backfill (`backfill.py`): PRs, issues, commits, releases | 1 |
 | Weekly | Last-commit date and stars per repo (`repo_meta.py`) | 3 |
 | Weekly | PyPI release history and Inactive flags (`pypi_metadata.py`) | 2 |

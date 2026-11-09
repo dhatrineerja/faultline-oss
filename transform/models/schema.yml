@@ -69,6 +69,8 @@ models:
         tests: [not_null]
       - name: as_of
         tests: [not_null]
+      - name: maintainer_activity_as_of
+        tests: [not_null]
       - name: status
         tests:
           - not_null
