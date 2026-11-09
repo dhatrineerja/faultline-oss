@@ -2,7 +2,8 @@
 -- A maintainer is an OWNER, MEMBER or COLLABORATOR who is not the author and not a bot. Only the
 -- first three comments and reviews were fetched, so an item whose first maintainer reply came
 -- later is left out, which makes this slightly optimistic. Only items opened in the current
--- window count.
+-- window count. Replies after the as_of day are ignored, so a repo fetched later than the
+-- snapshot is measured as of the same day.
 with items as (
     select repo, 'pr' as kind, number, author, created_at, first_comments as replies
     from {{ ref('stg_gh_prs') }}
@@ -36,6 +37,7 @@ first_reply as (
       and r.by is not null and r.by != author
       and not {{ is_bot('r.by') }}
       and cast(r.at as timestamp) >= created_at
+      and cast(r.at as timestamp) < (select end_ts from {{ ref('int_params') }})
     group by repo, kind, number
 )
 

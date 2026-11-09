@@ -14,6 +14,16 @@ Steps for keeping the pipeline running. Run commands from the repository root wi
 - **A run that never happens:** the refresh pings a healthchecks.io check (`HEALTHCHECK_URL` secret) after every good run, and the check alerts by email when no ping arrives within its period plus grace. A failed run also reports itself to the check. Without the secret the ping step is skipped and says so in the log.
 - **Setting:** period 3 hours and grace 3 hours, so an alert means about 6 hours without a good run, the same limit the Stage 1 checkpoint uses. Revisit it with the 6-hour rule.
 
+## The outside trigger
+
+GitHub's own 30-minute schedule ran about every 6 hours in the first week (longest gap 10.2 h), and 18 busy repositories lost events between runs because the Events API keeps only the latest 300 per repository. An outside scheduler now starts the `refresh` workflow every 30 minutes; the GitHub schedule stays as a backup. Two refreshes never run at once (the `refresh` concurrency group).
+
+- **Service:** cron-job.org (free), one job, every 30 minutes.
+- **Request:** `POST https://api.github.com/repos/dhatrineerja/faultline-oss/actions/workflows/refresh.yml/dispatches` with the headers `Authorization: Bearer <token>`, `Accept: application/vnd.github+json`, `X-GitHub-Api-Version: 2022-11-28`, `Content-Type: application/json` and the body `{"ref":"main"}`. GitHub answers 204 when it starts a run.
+- **Token:** a fine-grained GitHub token limited to this one repository, with the permission "Actions: Read and write" and an expiry date. It lives only in the cron-job.org job, never in the repository. When it expires the trigger fails with 401; the GitHub schedule and the heartbeat alert still work, so renew it and nothing is lost for long.
+- **Measure it:** `python ops/refresh_gaps.py --since <UTC start>` prints the gaps between successful runs and what started each run. The target is a gap of about 30 minutes.
+- **After a few good days:** tighten the heartbeat check (period and grace) from 3 hours each to about 1 hour each.
+
 ## Re-running a failed refresh
 
 The refresh is safe to repeat. Events are merged into hourly partitions by event id, and the per-repo state is saved only after the data is stored, so a failed run changes nothing and the next run picks up where it left off.

@@ -1,7 +1,8 @@
 """Measure the Stage 1 checkpoint: has the 30-minute refresh run reliably for 7 days?
 
 Reads three things and prints a markdown report:
-  1. GitHub Actions run history for the refresh workflow (public API).
+  1. GitHub Actions run history for the refresh workflow (public API); runs started by the GitHub
+     schedule or by the outside trigger count, and so do manual starts.
   2. The per-run records the job saves in the lake under metrics/events_api/.
   3. The stored events, to prove nothing was duplicated.
 
@@ -48,7 +49,11 @@ def actions_runs() -> list[dict]:
         batch = github(f"actions/workflows/refresh.yml/runs?per_page=100&page={page}")[
             "workflow_runs"
         ]
-        runs += [r for r in batch if parse(r["created_at"]) >= START and r["event"] == "schedule"]
+        runs += [
+            r
+            for r in batch
+            if parse(r["created_at"]) >= START and r["event"] in ("schedule", "workflow_dispatch")
+        ]
         if len(batch) < 100 or parse(batch[-1]["created_at"]) < START:
             return runs
         page += 1
@@ -108,7 +113,7 @@ def main() -> int:
     )
     print("| Measure | Value |\n| --- | --- |")
     print(
-        f"| Scheduled runs completed | {len(runs)} (expected about {expected} at every 30 minutes) |"
+        f"| Runs completed, scheduled or triggered | {len(runs)} (expected about {expected} at every 30 minutes) |"
     )
     print(f"| Successful / failed | {len(ok)} / {len(failed)} |")
     print(f"| Longest stretch without a successful run | {longest.total_seconds() / 3600:.1f} h |")
