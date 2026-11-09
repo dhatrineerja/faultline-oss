@@ -16,7 +16,7 @@ The point of the 7-day run is to show that the 30-minute refresh keeps working o
 | 6-month backfill covers at least 95% of repos | Met | 1,643 of 1,647 repos (99.8%), 33 shards, about 11,000 GraphQL points |
 | Re-running gives identical row counts | Met | Unit tests for the partition merge and the shard writer; a re-run of the same repos added no events |
 | Unchanged repos cost no rate limit | Met | On a re-run of 60 repos, 55 answered "unchanged" (HTTP 304), which GitHub does not count |
-| **7 straight days of runs** | **In progress** | See the log below |
+| **7 straight days of runs** | **Time has passed; two caveats open** | 7 days 16 h, 32 runs, 0 failed (measurement 2). The schedule runs about every 6 hours and 18 busy repos lost events; see the log below |
 
 ## How "7 straight days" is judged
 
@@ -81,3 +81,39 @@ Events per day (last 7 days): 2026-10-26 7303, 2026-10-27 7765, 2026-10-28 9955,
 Run outcomes: {'success': 4}
 
 **Reading of measurement 1.** Four scheduled runs completed in the first 16 hours, against about 32 for a perfect schedule, and none failed. The runs came about every 3 to 7 hours: GitHub starts scheduled workflows late and skips some, which is the known risk in section 13 of the plan, and it is heavier here than expected. Nothing was lost so far: no duplicate events, every loadable repo has state, and no repo had a gap yet. Only one run record exists because run records were added after the first runs. The "no stretch over 6 hours" criterion currently fails (longest 7.6 hours). The 6-hour limit is not in the plan, which asks only for "7 straight days of runs"; it was chosen when the script was written, as a way to catch stale data. It is left as written for now. If the schedule stays this slow, the options are to trigger the job from an outside scheduler or to change the limit, with a note in the plan either way.
+
+### Measurement 2, day 7: 2026-11-09 12:44 UTC
+
+Taken by hand: the automatic run on the morning of 9 November was skipped because its year guard used a value that a job condition cannot read. The guard is fixed in the workflow.
+
+Window: 2026-11-01 19:50 UTC to now (7 days 16 h).
+
+| Measure | Value |
+| --- | --- |
+| Scheduled runs completed | 32 (expected about 369 at every 30 minutes) |
+| Successful / failed | 32 / 0 |
+| Longest stretch without a successful run | 10.2 h |
+| Run records saved | 29 |
+| Runs that stopped early on the rate limit | 0 |
+| Lowest rate-limit headroom seen | 3750 |
+| Repos with a gap (more events than one run could fetch) | 18 |
+| Stored events / distinct ids | 381421 / 381421 |
+| Repos with saved state | 1643 of 1642 loadable |
+
+Events per day: 2026-11-02 33455, 2026-11-03 35302, 2026-11-04 32898, 2026-11-05 36979, 2026-11-06 38064, 2026-11-07 23740, 2026-11-08 20106, 2026-11-09 10819 (part day)
+
+| Pass criterion | Result |
+| --- | --- |
+| 7 days elapsed since the first good run | PASS |
+| no failed scheduled runs | PASS |
+| no stretch over 6 h without a successful run | FAIL |
+| no duplicate event ids in the lake | PASS |
+| state covers all 1642 loadable repos | PASS |
+
+**Reading of measurement 2.** The week the plan asks for has passed: 7 days and 16 hours, 32 scheduled runs, none failed, no duplicate events, every loadable repo followed. That is the plan's wording for the checkpoint. Two things do not meet the intent behind it.
+
+1. **The schedule runs about every 6 hours, not every 30 minutes.** 32 runs against about 369. The longest quiet stretch was 10.2 hours, so the 6-hour criterion (chosen for the script, not in the plan) fails.
+2. **The slow schedule has cost data.** 24 of 29 run records report at least one gap, and 18 repos were affected: litellm (13 runs), pydantic-ai (10), datahub (8), datamodel-code-generator (6), strands-agents harness-sdk (4), apache/airflow, openai-agents-python and daytona/clients (3 each), tensorflow, spark, mlflow and pytorch (2 each), and six others once. For these very busy repos, more than 300 events happened between two runs, so the oldest were never fetched. The quieter 1,600 repos were not affected. The 6-month backfill covers pull requests, issues, commits and releases for those windows, but the event feed itself has holes for these repos.
+
+**Open decision, to be settled with the owner:** the 6-hour rule, and whether to trigger the refresh from an outside scheduler so it runs closer to every 30 minutes. The second matters more than the first, because it is what stops data being lost. The checkpoint is not closed in the plan until this is settled.
+
