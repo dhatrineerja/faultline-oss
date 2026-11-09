@@ -19,18 +19,31 @@ concurrency:
 
 jobs:
   measure:
-    # A yearly cron cannot name a year, so ignore any run after 2026.
-    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.schedule, '30 3 9 11') && github.run_started_at < '2027-01-01'
+    # github.run_started_at is not available in a job condition (the first version skipped itself),
+    # so only the schedule is checked here and the year is checked in the first step.
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 3 9 11 *'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
+      - name: Skip after 2026 (a yearly cron cannot name a year)
+        id: guard
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "schedule" ] && [ "$(date -u +%Y)" != "2026" ]; then
+            echo "run=no" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=yes" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
+        if: steps.guard.outputs.run == 'yes'
       - uses: actions/setup-python@v5
+        if: steps.guard.outputs.run == 'yes'
         with:
           python-version: "3.12"
           cache: pip
       - run: pip install -e ".[pipeline]"
+        if: steps.guard.outputs.run == 'yes'
       - name: Run the checkpoint report
+        if: steps.guard.outputs.run == 'yes'
         env:
           GITHUB_TOKEN: ${{ secrets.GH_API_TOKEN }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
@@ -43,6 +56,7 @@ jobs:
           set -e
           test -s report.md
       - name: Append the report to the checkpoint log
+        if: steps.guard.outputs.run == 'yes'
         run: |
           {
             echo
@@ -54,6 +68,7 @@ jobs:
             echo "**Note.** Recorded automatically by the stage1-checkpoint workflow. Nothing was changed: the 6-hour criterion and the plan are as they were. What to do about the 6-hour rule is still to be decided with the owner."
           } >> docs/stage-1-checkpoint.md
       - name: Commit the log
+        if: steps.guard.outputs.run == 'yes'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
