@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Faultline Pitch Report v2</title>
+<meta name="author" content="Dhatri Neerja">
+<style>
+@page { size: 1280px 720px; margin: 0; }
+:root { --ink:#17212B; --mute:#5B6773; --line:#D9D5CC; --paper:#FBFAF6; --panel:#F1EEE6; --fault:#C4432A; --faultsoft:#F7E3DC; --teal:#1E6F73; --tealsoft:#DCECEB; --night:#121B24; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--paper); color: var(--ink); font-family: "Segoe UI", Arial, sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.s { width: 1280px; height: 720px; padding: 44px 64px 0; position: relative; overflow: hidden; page-break-after: always; break-after: page; background: var(--paper); }
+.s:last-child { page-break-after: auto; break-after: auto; }
+.eyebrow { font-size: 14px; font-weight: 600; letter-spacing: .09em; text-transform: uppercase; color: var(--fault); margin: 0 0 6px; }
+h1 { font-size: 34px; line-height: 1.18; font-weight: 600; margin: 0 0 22px; letter-spacing: -.01em; max-width: 1130px; }
+p { font-size: 20px; line-height: 1.42; margin: 0 0 12px; }
+.foot { position: absolute; left: 64px; right: 64px; bottom: 18px; display: flex; justify-content: space-between; font-size: 13px; color: var(--mute); }
+.src { position: absolute; left: 64px; right: 64px; bottom: 42px; font-size: 14px; color: var(--mute); }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
+.grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+.card { background: var(--panel); border-radius: 6px; padding: 20px 22px; }
+.card h3 { font-size: 24px; font-weight: 600; margin: 0 0 8px; }
+.card p { font-size: 19.5px; line-height: 1.38; margin: 0; }
+.card p.big { font-size: 54px; font-weight: 600; color: var(--fault); margin: 0 0 4px; line-height: 1.1; }
+.call { border-left: 5px solid var(--fault); padding: 6px 0 6px 18px; font-size: 23px; line-height: 1.38; margin: 0; }
+table { border-collapse: collapse; width: 100%; font-size: 19px; line-height: 1.3; }
+th { text-align: left; font-weight: 600; border-bottom: 2px solid var(--ink); padding: 7px 12px 7px 0; }
+td { border-bottom: 1px solid var(--line); padding: 11px 12px 11px 0; vertical-align: top; }
+svg text { font-family: "Segoe UI", Arial, sans-serif; }
+
+/* title */
+.title { background: var(--night); color: #F5F2EA; padding: 0; }
+.title .in { position: absolute; left: 76px; top: 205px; width: 900px; }
+.title .brand { font-size: 104px; font-weight: 600; letter-spacing: -.025em; margin: 0 0 14px; line-height: 1; }
+.title .sub { font-size: 29px; line-height: 1.32; margin: 0 0 26px; color: #E7E2D6; }
+.title .meta { font-size: 17px; color: #A9B2BA; margin: 0; }
+.title svg { position: absolute; inset: 0; }
+
+/* bars */
+.bar { display: grid; grid-template-columns: 255px 1fr 56px; gap: 12px; align-items: center; font-size: 19.5px; margin-bottom: 18px; }
+.bar i { display: block; height: 28px; background: #8A97A3; border-radius: 2px; }
+.bar.hot i { background: var(--fault); }
+.bar.hot { font-weight: 600; }
+.bar b { font-weight: 600; text-align: right; }
+
+/* roadmap */
+.rm { display: grid; grid-template-columns: 250px 330px 1fr; column-gap: 20px; align-items: center; font-size: 16.5px; line-height: 1.24; }
+.rm > div { padding: 6px 0; border-bottom: 1px solid var(--line); height: 58px; display: flex; align-items: center; }
+.rm .h { font-weight: 600; height: 30px; border-bottom: 2px solid var(--ink); }
+.rm .nm { font-weight: 600; font-size: 17px; }
+.rm .tr { position: relative; }
+.rm .tr i { position: absolute; top: 18px; height: 22px; background: #8A97A3; border-radius: 2px; }
+.rm .tr i.m { background: var(--teal); }
+.rm .tr i.g { background: var(--fault); }
+
+/* notes */
+.notes { columns: 2; column-gap: 40px; font-size: 14.3px; line-height: 1.3; }
+.notes div { break-inside: avoid; margin-bottom: 8px; }
+.notes b { display: block; font-weight: 600; font-size: 15px; }
+.qa td, .qa th { font-size: 16px; padding-top: 7px; padding-bottom: 7px; }
+.t18 td, .t18 th { font-size: 18px; padding-top: 9px; padding-bottom: 9px; }
+.rm .nm em { display: block; font-style: normal; font-weight: 400; font-size: 14px; color: var(--mute); }
+.chg td, .chg th { font-size: 16.5px; padding-top: 8px; padding-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<!-- 1 -->
+<section class="s title">
+  <svg width="1280" height="720" viewBox="0 0 1280 720" aria-hidden="true">
+    <polyline points="1010,0 1062,96 1022,172 1104,262 1066,352 1150,436 1098,530 1176,622 1150,720" fill="none" stroke="#C4432A" stroke-width="4"/>
+    <polyline points="1104,262 1190,240 1280,268" fill="none" stroke="#C4432A" stroke-width="2" opacity=".65"/>
+    <polyline points="1098,530 1020,566 960,552" fill="none" stroke="#C4432A" stroke-width="2" opacity=".65"/>
+  </svg>
+  <div class="in">
+    <p class="brand">Faultline</p>
+    <p class="sub">Find the hidden risk in open-source dependencies before something breaks.</p>
+    <p class="meta">Project pitch report, version 2 &nbsp;|&nbsp; Dhatri Neerja &nbsp;|&nbsp; 9 November 2026</p>
+    <p class="meta">Status: Stages 0 to 2 built, Stage 3 (the live dashboard) is next</p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section class="s">
+  <p class="eyebrow">The problem</p>
+  <h1>Stars measure popularity, not health, and the real risk sits where nobody is looking</h1>
+  <div class="grid3" style="margin-bottom:24px">
+    <div class="card"><p class="big">2016</p><h3>left-pad</h3><p>One maintainer unpublished an 11-line npm package, and builds broke across the industry.</p></div>
+    <div class="card"><p class="big">2021</p><h3>Log4Shell</h3><p>A critical flaw in a logging library that many teams did not know they used, because it arrived transitively.</p></div>
+    <div class="card"><p class="big">2024</p><h3>xz backdoor</h3><p>An attacker spent years gaining the trust of the overstretched maintainer of a library used across Linux.</p></div>
+  </div>
+  <p class="call">Each incident was a dependency-chain or maintainer-concentration problem. Tools that score one repository at a time cannot see either.</p>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>2</span></div>
+</section>
+
+<!-- 3 -->
+<section class="s">
+  <p class="eyebrow">The need</p>
+  <h1>Three groups need an answer that popularity numbers cannot give</h1>
+  <table style="margin-bottom:26px">
+    <tr><th style="width:24%">Who</th><th style="width:40%">Their question</th><th>What Faultline gives them</th></tr>
+    <tr><td style="font-size:21px;font-weight:600">Engineering leaders</td><td style="font-size:21px">Which library should we adopt, and is our current stack still safe?</td><td style="font-size:21px">Ranked recommendation with reasons, plus a stack risk view</td></tr>
+    <tr><td style="font-size:21px;font-weight:600">Security teams</td><td style="font-size:21px">If package X is abandoned or compromised, what is affected?</td><td style="font-size:21px">Blast-radius query and open advisories</td></tr>
+    <tr><td style="font-size:21px;font-weight:600">Developer-tool investors</td><td style="font-size:21px">Which projects are rising or quietly declining?</td><td style="font-size:21px">Trend views and early decline flags</td></tr>
+  </table>
+  <p class="call">Supply-chain rules such as SBOM expectations and the EU Cyber Resilience Act are pushing teams to know what they depend on, not only what they import.</p>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>3</span></div>
+</section>
+
+<!-- 4 -->
+<section class="s">
+  <p class="eyebrow">The gap</p>
+  <h1>Existing tools each cover part of the picture, and none we found joins it all up</h1>
+  <table>
+    <tr><th style="width:26%">Existing tool</th><th style="width:37%">What it does</th><th>What is missing</th></tr>
+    <tr><td>OpenSSF Scorecard</td><td>Checks security practices of one repository</td><td>Activity trends, dependency chains, recommendations</td></tr>
+    <tr><td>deps.dev</td><td>Dependency graphs, advisories, Scorecard data</td><td>Maintainer-health score, ranked picks, backtest</td></tr>
+    <tr><td>ecosyste.ms</td><td>Indexes packages and dependents</td><td>Raw data, not a health judgment</td></tr>
+    <tr><td>Cauldron, LFX Insights</td><td>Hosted community health analytics</td><td>Mostly per-project views; no recommendations</td></tr>
+    <tr><td>Snyk, Aikido</td><td>Health signals inside security products</td><td>Closed scoring</td></tr>
+    <tr><td>Stars and downloads</td><td>Popularity</td><td>Whether maintainers are still there</td></tr>
+  </table>
+  <p class="call" style="margin-top:22px">The claim is deliberately narrow: no free tool in our survey combines transitive and maintainer risk, a reasoned recommendation and a published backtest.</p>
+  <div class="src" style="bottom:36px">Preliminary survey. Each tool's current features will be re-checked before launch.</div>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>4</span></div>
+</section>
+
+<!-- 5 -->
+<section class="s">
+  <p class="eyebrow">The idea</p>
+  <h1>Faultline tracks health, maps hidden risk, recommends what to use, and tests itself</h1>
+  <div class="grid4" style="margin-bottom:26px">
+    <div class="card"><h3>Track</h3><p><b>Is this package healthy?</b></p><p style="margin-top:8px">Eight activity and risk signals become one transparent score, with trends and early decline flags.</p></div>
+    <div class="card"><h3>Map</h3><p><b>Where does risk hide?</b></p><p style="margin-top:8px">A knowledge graph shows transitive risk, maintainer concentration, blast radius and licence conflicts.</p></div>
+    <div class="card"><h3>Recommend</h3><p><b>What should I use?</b></p><p style="margin-top:8px">Describe a need and get a ranked pick, with every reason traced to the score.</p></div>
+    <div class="card" style="background:var(--faultsoft)"><h3>Prove</h3><p><b>Does the score work?</b></p><p style="margin-top:8px">A published backtest against stars, commit recency, release recency and OpenSSF Scorecard.</p></div>
+  </div>
+  <p class="call">Version 1: 2,000 PyPI packages tracked and 1,996 scored today, a refresh planned every 30 minutes, and $0 running cost so far on free tiers.</p>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>5</span></div>
+</section>
+
+<!-- 6 -->
+<section class="s">
+  <p class="eyebrow">The core insight</p>
+  <h1>A package can look healthy on its own page and still rest on a weak link three levels down</h1>
+  <svg width="1152" height="400" viewBox="0 0 1152 400" role="img" aria-label="Dependency chain from package A to a low-activity package D three levels down">
+    <defs><marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5B6773"/></marker></defs>
+    <g font-size="17">
+      <rect x="0" y="62" width="240" height="118" rx="6" fill="#DCECEB"/>
+      <text x="20" y="96" font-size="21" font-weight="600" fill="#17212B">Package A</text>
+      <text x="20" y="126" fill="#17212B">Own health 88</text>
+      <text x="20" y="152" fill="#5B6773">What you installed</text>
+
+      <rect x="304" y="62" width="240" height="118" rx="6" fill="#F1EEE6"/>
+      <text x="324" y="96" font-size="21" font-weight="600" fill="#17212B">Package B</text>
+      <text x="324" y="126" fill="#17212B">Own health 82</text>
+      <text x="324" y="152" fill="#5B6773">Depth 1, risk 18 x 1.00 = 18</text>
+
+      <rect x="608" y="62" width="240" height="118" rx="6" fill="#F1EEE6"/>
+      <text x="628" y="96" font-size="21" font-weight="600" fill="#17212B">Package C</text>
+      <text x="628" y="126" fill="#17212B">Own health 75</text>
+      <text x="628" y="152" fill="#5B6773">Depth 2, risk 25 x 0.60 = 15</text>
+
+      <rect x="912" y="62" width="240" height="118" rx="6" fill="#F7E3DC" stroke="#C4432A" stroke-width="2"/>
+      <text x="932" y="96" font-size="21" font-weight="600" fill="#C4432A">Package D</text>
+      <text x="932" y="126" fill="#17212B">Own health 12</text>
+      <text x="932" y="152" fill="#17212B">Depth 3, risk 88 x 0.36 = 32</text>
+    </g>
+    <g stroke="#5B6773" stroke-width="2" marker-end="url(#a1)">
+      <line x1="242" y1="121" x2="300" y2="121"/><line x1="546" y1="121" x2="604" y2="121"/><line x1="850" y1="121" x2="908" y2="121"/>
+    </g>
+    <text x="270" y="108" font-size="14" text-anchor="middle" fill="#5B6773">uses</text>
+    <text x="574" y="108" font-size="14" text-anchor="middle" fill="#5B6773">uses</text>
+    <text x="878" y="108" font-size="14" text-anchor="middle" fill="#5B6773">uses</text>
+    <text x="0" y="32" font-size="17" font-weight="600" fill="#1E6F73">Per-repository tools stop here</text>
+    <line x1="120" y1="40" x2="120" y2="60" stroke="#1E6F73" stroke-width="2"/>
+    <text x="1152" y="32" font-size="17" font-weight="600" text-anchor="end" fill="#C4432A">Faultline follows the graph to here</text>
+    <line x1="1032" y1="40" x2="1032" y2="60" stroke="#C4432A" stroke-width="2"/>
+    <rect x="0" y="226" width="1152" height="104" rx="6" fill="#F1EEE6"/>
+    <text x="24" y="266" font-size="23" font-weight="600" fill="#17212B">Dependency risk for Package A = 32, driven by Package D</text>
+    <text x="24" y="302" font-size="19" fill="#17212B">Worst dependency wins, discounted by 0.6 per level: (100 - own health) x 0.6^(depth - 1)</text>
+    <text x="0" y="372" font-size="19" fill="#17212B">The same graph answers who is affected if D is abandoned (blast radius), and whether one person holds several critical packages.</text>
+  </svg>
+  <div class="src">Illustrative example. Packages and numbers are invented to show the formula; no real package was scored.</div>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>6</span></div>
+</section>
+
+<!-- 7 -->
+<section class="s">
+  <p class="eyebrow">The score</p>
+  <h1>One transparent, versioned formula that anyone can recompute and challenge</h1>
+  <div style="display:grid;grid-template-columns:690px 1fr;gap:44px">
+    <div>
+      <div class="bar"><span>Maintainer activity</span><i style="width:100%"></i><b>20%</b></div>
+      <div class="bar"><span>Contributor retention</span><i style="width:75%"></i><b>15%</b></div>
+      <div class="bar"><span>Responsiveness</span><i style="width:75%"></i><b>15%</b></div>
+      <div class="bar hot"><span>Dependency risk (graph)</span><i style="width:75%"></i><b>15%</b></div>
+      <div class="bar"><span>PR flow</span><i style="width:50%"></i><b>10%</b></div>
+      <div class="bar"><span>Release recency</span><i style="width:50%"></i><b>10%</b></div>
+      <div class="bar"><span>Bus factor</span><i style="width:50%"></i><b>10%</b></div>
+      <div class="bar"><span>Open vulnerabilities</span><i style="width:25%"></i><b>5%</b></div>
+    </div>
+    <div>
+      <p style="font-size:19px"><b>Percentile-based.</b> Each signal becomes a 0 to 100 percentile within the tracked set, then combines by weight.</p>
+      <p style="font-size:19px"><b>Not circular.</b> Dependency risk uses each dependency's own health, without its dependency term.</p>
+      <p style="font-size:19px"><b>Versioned and honest.</b> Every score row stores its formula version and a confidence label, normal or low, by how many signals it rests on.</p>
+      <p style="font-size:19px"><b>Disciplined.</b> The weights have not changed since the first commit. Moving any of them by up to 30% barely moves the ranking (rank correlation 0.99 or higher).</p>
+    </div>
+  </div>
+  <div class="src">Formula v1 weights. Dependency risk and open vulnerabilities arrive in Stage 4; until then the other weights are rescaled to 100%.</div>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>7</span></div>
+</section>
+
+<!-- 8 -->
+<section class="s">
+  <p class="eyebrow">The recommendation</p>
+  <h1>Describe a need, and get a ranked pick with reasons that trace back to the data</h1>
+  <p class="card" style="font-size:21px;margin-bottom:20px"><b>Example need:</b> "Python library for parsing PDFs, MIT licence, for a commercial product."</p>
+  <svg width="1152" height="118" viewBox="0 0 1152 118" role="img" aria-label="Four step flow: find, filter, rank, explain">
+    <g fill="#F1EEE6"><path d="M0 0H262L292 59L262 118H0z"/><path d="M296 0H554L584 59L554 118H296L326 59z"/><path d="M588 0H846L876 59L846 118H588L618 59z"/><path d="M880 0H1152V118H880L910 59z" fill="#DCECEB"/></g>
+    <g font-size="22" font-weight="600" fill="#17212B"><text x="24" y="44">1. Find</text><text x="342" y="44">2. Filter</text><text x="634" y="44">3. Rank</text><text x="926" y="44">4. Explain</text></g>
+    <g font-size="16" fill="#17212B">
+      <text x="24" y="72">Vector search over READMEs,</text><text x="24" y="94">descriptions and topics</text>
+      <text x="342" y="72">Remove the wrong</text><text x="342" y="94">language or licence</text>
+      <text x="634" y="72">Health, adoption, dependency</text><text x="634" y="94">risk, vulnerabilities</text>
+      <text x="926" y="72">Templates filled from</text><text x="926" y="94">score components</text>
+    </g>
+  </svg>
+  <p class="call" style="margin-top:36px">"Pick A: active maintainers and broad adoption. Avoid B: one maintainer, and it relies on an abandoned package."</p>
+  <p style="font-size:19px;margin-top:20px;color:var(--mute)">Explanations use templates, not a language model, so they are free, testable and cannot invent a fact.</p>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>8</span></div>
+</section>
+
+<!-- 9 -->
+<section class="s" style="padding-top:34px">
+  <p class="eyebrow">The architecture</p>
+  <h1 style="margin-bottom:12px">One source of truth, with a purpose-built copy for each live feature</h1>
+  <svg width="1152" height="540" viewBox="0 0 1152 540" role="img" aria-label="Layered architecture from data sources through the lake to live services">
+    <defs><marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#5B6773"/></marker></defs>
+    <g font-size="14" fill="#5B6773">
+      <text x="0" y="30">1 Sources</text><text x="0" y="118">2 Ingestion</text><text x="0" y="206">3 Lake</text><text x="0" y="287">4-5 Transform,</text><text x="0" y="305">graph compute</text><text x="0" y="382">6 Serving</text><text x="0" y="470">7 Live services</text>
+    </g>
+    <!-- sources -->
+    <g fill="#F1EEE6"><rect x="120" y="4" width="136" height="46" rx="5"/><rect x="264" y="4" width="136" height="46" rx="5"/><rect x="408" y="4" width="136" height="46" rx="5"/><rect x="552" y="4" width="136" height="46" rx="5"/><rect x="696" y="4" width="136" height="46" rx="5"/><rect x="840" y="4" width="136" height="46" rx="5"/></g>
+    <g font-size="15.5" text-anchor="middle" fill="#17212B"><text x="188" y="32">GraphQL history</text><text x="332" y="32">Events API</text><text x="476" y="32">GitHub REST</text><text x="620" y="32">PyPI</text><text x="764" y="32">deps.dev</text><text x="908" y="32">OSV</text></g>
+    <!-- ingestion -->
+    <rect x="120" y="92" width="856" height="46" rx="5" fill="#F1EEE6"/>
+    <text x="548" y="121" font-size="16.5" text-anchor="middle" fill="#17212B">GitHub Actions on three schedules: every 30 minutes, daily, weekly</text>
+    <!-- lake -->
+    <rect x="120" y="180" width="856" height="46" rx="5" fill="#C4432A"/>
+    <text x="548" y="209" font-size="17" font-weight="600" text-anchor="middle" fill="#FFFFFF">Parquet lake on Hugging Face, partitioned by date and hour: the source of truth</text>
+    <!-- transform -->
+    <rect x="120" y="268" width="856" height="46" rx="5" fill="#F1EEE6"/>
+    <text x="548" y="297" font-size="16" text-anchor="middle" fill="#17212B">dbt on DuckDB: staging, intermediate, marts, tests. NetworkX writes PageRank and transitive risk back to the marts.</text>
+    <!-- serving -->
+    <rect x="120" y="356" width="270" height="46" rx="5" fill="#DCECEB"/><text x="255" y="385" font-size="16.5" text-anchor="middle" fill="#17212B">Neo4j: path queries</text>
+    <rect x="410" y="356" width="270" height="46" rx="5" fill="#DCECEB"/><text x="545" y="385" font-size="16.5" text-anchor="middle" fill="#17212B">Neon + pgvector: search</text>
+    <!-- live -->
+    <rect x="120" y="444" width="560" height="46" rx="5" fill="#1E6F73"/><text x="400" y="473" font-size="17" font-weight="600" text-anchor="middle" fill="#FFFFFF">FastAPI recommendations</text>
+    <rect x="704" y="444" width="272" height="46" rx="5" fill="#1E6F73"/><text x="840" y="473" font-size="17" font-weight="600" text-anchor="middle" fill="#FFFFFF">Evidence static dashboard</text>
+    <!-- arrows -->
+    <g stroke="#5B6773" stroke-width="2" marker-end="url(#a2)" fill="none">
+      <line x1="548" y1="52" x2="548" y2="90"/><line x1="548" y1="140" x2="548" y2="178"/><line x1="548" y1="228" x2="548" y2="266"/>
+      <line x1="255" y1="316" x2="255" y2="354"/><line x1="545" y1="316" x2="545" y2="354"/><line x1="255" y1="404" x2="255" y2="442"/><line x1="545" y1="404" x2="545" y2="442"/>
+      <line x1="840" y1="316" x2="840" y2="442"/>
+    </g>
+    <text x="852" y="376" font-size="14" fill="#5B6773">Rebuilt after</text><text x="852" y="394" font-size="14" fill="#5B6773">each refresh</text>
+    <text x="548" y="522" font-size="15" text-anchor="middle" fill="#5B6773">Visitors only read copies, so no page view triggers a heavy query. Any store can be rebuilt from the lake.</text>
+    <!-- ops -->
+    <rect x="1000" y="4" width="152" height="486" rx="5" fill="#F1EEE6"/>
+    <text x="1076" y="218" font-size="16" font-weight="600" text-anchor="middle" fill="#17212B">8 Operations</text>
+    <g font-size="15" text-anchor="middle" fill="#17212B"><text x="1076" y="246">Alerts</text><text x="1076" y="268">Secrets</text><text x="1076" y="290">CI tests</text><text x="1076" y="312">Runbook</text></g>
+    <text x="1076" y="372" font-size="15" font-weight="600" text-anchor="middle" fill="#1E6F73">Built so far</text>
+    <g font-size="14" text-anchor="middle" fill="#17212B"><text x="1076" y="396">Layers 1 to 3</text><text x="1076" y="416">dbt models and</text><text x="1076" y="436">score in layer 4</text></g>
+  </svg>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>9</span></div>
+</section>
+
+<!-- 10 -->
+<section class="s">
+  <p class="eyebrow">Design choices</p>
+  <h1>Every choice is deliberate, free today, and has a named path to larger scale</h1>
+  <table style="margin-bottom:18px">
+    <tr><th style="width:17%">Layer</th><th style="width:27%">Choice</th><th style="width:35%">Why</th><th>At larger scale</th></tr>
+    <tr><td>Orchestration</td><td>GitHub Actions cron</td><td>No server to run, but it starts late</td><td>Airflow or Dagster</td></tr>
+    <tr><td>Processing</td><td>DuckDB + dbt</td><td>Filtered data fits on one machine</td><td>Warehouse or Spark</td></tr>
+    <tr><td>Lake</td><td>Parquet on Hugging Face</td><td>Permanent, columnar, versioned</td><td>Object storage + Iceberg</td></tr>
+    <tr><td>Graph</td><td>Neo4j AuraDB Free</td><td>Readable multi-hop path queries</td><td>Paid Neo4j or Memgraph</td></tr>
+    <tr><td>Search</td><td>pgvector on Neon</td><td>Vectors and filters in one query</td><td>Dedicated vector database</td></tr>
+    <tr><td>Serving</td><td>FastAPI, Evidence</td><td>Typed API; static site survives failures</td><td>Cloud Run, Superset</td></tr>
+  </table>
+  <div class="grid2">
+    <p class="call" style="font-size:20px"><b>Why batch, not Kafka?</b> Package health moves over days and weeks, so a 30-minute refresh supports the same decisions with no always-on server.</p>
+    <p class="call" style="font-size:20px"><b>Safe re-runs.</b> Events merge by id into date-hour partitions, and a repository's saved position moves only after its data is stored, so a retry never double-counts or skips.</p>
+  </div>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>10</span></div>
+</section>
+
+<!-- 11 -->
+<section class="s">
+  <p class="eyebrow">The proof</p>
+  <h1>The score has to earn trust: it will be tested on history, against simple baselines</h1>
+  <div style="display:grid;grid-template-columns:690px 1fr;gap:38px">
+    <svg width="690" height="340" viewBox="0 0 690 340" role="img" aria-label="Rolling backtest timeline with tuning cutoffs and reporting cutoffs">
+      <g font-size="15" fill="#5B6773"><text x="0" y="16">Rolling cutoffs (illustrative spacing)</text></g>
+      <g font-size="15" fill="#17212B"><text x="0" y="66">Tune</text><text x="0" y="122">Tune</text><text x="0" y="178">Report</text><text x="0" y="234">Report</text></g>
+      <g fill="#C9CFD5"><rect x="64" y="46" width="170" height="28"/><rect x="64" y="102" width="260" height="28"/><rect x="64" y="158" width="350" height="28"/><rect x="64" y="214" width="440" height="28"/></g>
+      <g fill="#DCECEB"><rect x="234" y="46" width="160" height="28"/><rect x="324" y="102" width="160" height="28"/></g>
+      <g fill="#F7E3DC"><rect x="414" y="158" width="160" height="28"/><rect x="504" y="214" width="160" height="28"/></g>
+      <g stroke="#17212B" stroke-width="3"><line x1="234" y1="40" x2="234" y2="80"/><line x1="324" y1="96" x2="324" y2="136"/><line x1="414" y1="152" x2="414" y2="192"/><line x1="504" y1="208" x2="504" y2="248"/></g>
+      <g font-size="15"><rect x="0" y="284" width="20" height="16" fill="#C9CFD5"/><text x="28" y="297" fill="#17212B">Data the score may use</text>
+      <line x1="228" y1="282" x2="228" y2="302" stroke="#17212B" stroke-width="3"/><text x="238" y="297" fill="#17212B">Cutoff</text>
+      <rect x="310" y="284" width="20" height="16" fill="#F7E3DC"/><text x="338" y="297" fill="#17212B">Next 6 to 12 months: was it abandoned?</text></g>
+      <text x="0" y="330" font-size="15" fill="#5B6773">Later data never leaks into the score. Package lists are rebuilt as of each cutoff.</text>
+    </svg>
+    <div>
+      <p style="font-size:19px;margin-bottom:6px"><b>Compared against</b></p>
+      <p style="font-size:18px;margin-bottom:14px">Stars alone, last-commit recency alone, release recency alone, OpenSSF Scorecard</p>
+      <p style="font-size:19px;margin-bottom:6px"><b>Reported</b></p>
+      <p style="font-size:18px;margin-bottom:14px">Precision and recall, precision at the bottom 5% of scores, PR-AUC, and lead time in months</p>
+      <p style="font-size:19px;margin-bottom:6px"><b>Graph test</b></p>
+      <p style="font-size:18px;margin-bottom:14px">The score with and without the dependency term</p>
+      <p style="font-size:19px;margin-bottom:6px"><b>Pre-committed</b></p>
+      <p style="font-size:18px">"Abandoned" is defined and committed before any data is examined</p>
+    </div>
+  </div>
+  <div class="src"><b style="color:var(--fault)">No backtest results yet, and one early warning.</b> On a rough stand-in for abandonment (49 archived or Inactive packages), last commit alone caught more than the score's bottom 5% (19 against 15). Stage 6 decides; misses will be published.</div>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>11</span></div>
+</section>
+
+<!-- 12 -->
+<section class="s" style="padding-top:34px">
+  <p class="eyebrow">The roadmap</p>
+  <h1 style="margin-bottom:10px">Stages 0 to 2 are built, and Stage 3, the live MVP, is next</h1>
+  <div class="rm">
+    <div class="h">Stage</div><div class="h">Week 0 to 13 (upper estimate)</div><div class="h">Gate to pass</div>
+    <div class="nm"><span>0 Setup and definitions<em>Done</em></span></div><div class="tr"><i style="left:0;width:7.7%"></i></div><div>Definitions committed before data is examined; limits confirmed</div>
+    <div class="nm"><span>1 Ingestion pipeline<em>Built; runs slower than planned</em></span></div><div class="tr"><i style="left:7.7%;width:15.4%"></i></div><div>7 days of runs passed, with caveats; re-runs give identical row counts</div>
+    <div class="nm"><span>2 Models and score v1<em>Built</em></span></div><div class="tr"><i style="left:23.1%;width:15.4%"></i></div><div>32 dbt tests pass; every mapped package scored (95% needed)</div>
+    <div class="nm"><span>3 Dashboard and alerts (MVP)<em>Next</em></span></div><div class="tr"><i class="m" style="left:38.5%;width:7.7%"></i></div><div>Public URL; a broken run alerts and the site keeps last good data</div>
+    <div class="nm"><span>4 Knowledge graph<em>Planned</em></span></div><div class="tr"><i class="g" style="left:46.2%;width:15.4%"></i></div><div>Risk queries work for every package; under 80% of the graph cap</div>
+    <div class="nm"><span>5 Search, recommendation<em>Planned</em></span></div><div class="tr"><i class="g" style="left:61.6%;width:15.4%"></i></div><div>20 test queries give sensible top 3s, with traceable reasons</div>
+    <div class="nm"><span>6 Backfill and backtest<em>Planned</em></span></div><div class="tr"><i class="g" style="left:77%;width:15.4%"></i></div><div>Results published for all baselines, with and without the graph</div>
+    <div class="nm"><span>7 Launch and write-up<em>Planned</em></span></div><div class="tr"><i style="left:92.4%;width:7.6%"></i></div><div>A newcomer understands the project from the README in 5 minutes</div>
+  </div>
+  <div class="src" style="bottom:40px">Grey: foundations. Teal: MVP. Red: the differentiators. Assumes 10 to 15 hours a week; estimates total 11 to 13 weeks.</div>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>12</span></div>
+</section>
+
+<!-- 13 -->
+<section class="s">
+  <p class="eyebrow">Demo points</p>
+  <h1>The planned demo tells one story, with each moment unlocked by a stage gate</h1>
+  <table>
+    <tr><th style="width:6%">#</th><th style="width:36%">Show</th><th style="width:44%">The point it makes</th><th>Ready after</th></tr>
+    <tr><td>1</td><td>Dashboard: one package's trend</td><td>Health is measured from activity, not stars</td><td>Stage 3</td></tr>
+    <tr><td>2</td><td>Last-updated time and formula version</td><td>Data is fresh, and the score is reproducible</td><td>Stage 3</td></tr>
+    <tr><td>3</td><td>Break a run live, or show a recorded failure</td><td>An alert fires, and the site keeps the last good data</td><td>Stage 3</td></tr>
+    <tr><td>4</td><td>Graph: the three-levels-down query</td><td>A healthy-looking package has a hidden weak link</td><td>Stage 4</td></tr>
+    <tr><td>5</td><td>Blast radius for one critical package</td><td>What is affected if it is abandoned or compromised</td><td>Stage 4</td></tr>
+    <tr><td>6</td><td>Type the PDF-library need into the API</td><td>A ranked pick, with reasons traced to the score</td><td>Stage 5</td></tr>
+    <tr><td>7</td><td>Backtest results table</td><td>How the score did against the baselines, misses included</td><td>Stage 6</td></tr>
+  </table>
+  <p class="call" style="margin-top:20px">Today's presentation covers the design and what is built so far. The live demo follows as each stage ships.</p>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>13</span></div>
+</section>
+
+<!-- 14 -->
+<section class="s">
+  <p class="eyebrow">Risks and responsibility</p>
+  <h1>The main risks are known, and each one already has a mitigation in the plan</h1>
+  <table class="t18" style="margin-bottom:20px">
+    <tr><th style="width:42%">Risk</th><th>Mitigation</th></tr>
+    <tr><td>The free scheduler runs late: about every 6 hours measured, not every 30 minutes, and busy repositories lost events between runs</td><td>Heartbeat and email alerts are live; a six-month backfill refills gaps; an outside trigger is the next fix</td></tr>
+    <tr><td>GitHub rate limits: a 5,000-call hourly allowance</td><td>ETags (an unchanged repository costs nothing) and batching; measured headroom never fell below 3,750</td></tr>
+    <tr><td>Incomplete PyPI-to-GitHub mapping</td><td>Override file and a public "unmapped" report: 4 of 2,000 repositories are not found, 1 more cannot be loaded</td></tr>
+    <tr><td>Neo4j free-tier cap or idle pause</td><td>Stay under 80% of the cap; rebuild from the lake; Postgres as fallback</td></tr>
+    <tr><td>A wrong or gamed score</td><td>Open components, "low confidence" labels, published misses; the early baseline warning is reported, not hidden</td></tr>
+    <tr><td>Scope creep</td><td>Ship the MVP, then the graph, before anything new</td></tr>
+  </table>
+  <p class="call" style="font-size:20px"><b>Maintainers are people.</b> Concentration is shown as a property of a package, never a ranking of people, and public wording is "needs support", not "dying".</p>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>14</span></div>
+</section>
+
+<!-- 15 -->
+<section class="s">
+  <p class="eyebrow">Summary</p>
+  <h1>Faultline turns a popularity contest into evidence about what is safe to depend on</h1>
+  <div class="grid3" style="margin-bottom:24px">
+    <div class="card"><p class="big" style="color:var(--teal)">1,996</p><p>packages scored, of 2,000 tracked</p></div>
+    <div class="card"><p class="big" style="color:var(--teal)">~6 h</p><p>measured refresh interval; 30 minutes planned</p></div>
+    <div class="card"><p class="big" style="color:var(--teal)">$0</p><p>running cost so far, all on free tiers</p></div>
+  </div>
+  <p style="font-weight:600;font-size:23px;margin-bottom:10px">What happens next: Stage 3</p>
+  <p style="font-size:21px;margin-bottom:7px">1. Blend the 30-minute events into the scores, so the numbers actually move.</p>
+  <p style="font-size:21px;margin-bottom:7px">2. Build the dashboard and deploy it, with alerts and a deliberate-failure test.</p>
+  <p style="font-size:21px;margin-bottom:7px">3. Publish a separate derived dataset with its licence before anything goes public.</p>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>15</span></div>
+</section>
+
+<!-- 16 appendix -->
+<section class="s" style="padding-top:34px">
+  <p class="eyebrow">Appendix</p>
+  <h1 style="font-size:30px;margin-bottom:12px">What changed since the 1 November plan, and why</h1>
+  <table class="chg">
+    <tr><th style="width:15%">Area</th><th style="width:25%">Was</th><th style="width:30%">Now</th><th>Why</th></tr>
+    <tr><td>Event data</td><td>GH Archive, loaded daily</td><td>Events API every 30 minutes, plus a six-month GraphQL backfill</td><td>Measured: recent archive files held under 1% of events; one day was missing about half the pull requests</td></tr>
+    <tr><td>Score rules</td><td>Eight components, one minimum</td><td>Same weights; added a dormant status, a low-confidence label and minimum sample sizes</td><td>The data forced them: 448 inactive packages and 178 quiet ones would have been hidden</td></tr>
+    <tr><td>Busy repositories</td><td>One page cap for all</td><td>38 repositories fetched again at a higher cap; none cut short</td><td>pandas, torch and other big projects had no score</td></tr>
+    <tr><td>Backtest baselines</td><td>Three</td><td>Four: release recency added; last commit uses full history</td><td>The score's bottom 5% is largely a recency list</td></tr>
+    <tr><td>Alerts</td><td>Planned</td><td>Email and a heartbeat check are live; phone alerts later</td><td>The scheduler runs late, so silence must raise an alarm</td></tr>
+    <tr><td>Licence</td><td>To be chosen</td><td>Code Apache-2.0; published package data CC BY 4.0; the raw lake stays private</td><td>The raw lake holds GitHub usernames</td></tr>
+    <tr><td>Next step</td><td>Dashboard</td><td>First blend the 30-minute events into the scores</td><td>Scores come only from the November snapshot today</td></tr>
+  </table>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>16</span></div>
+</section>
+
+<!-- notes 1 -->
+<section class="s" style="padding-top:36px">
+  <p class="eyebrow">Speaker notes</p>
+  <h1 style="font-size:28px;margin-bottom:14px">What to say on each slide (about 12 minutes in total)</h1>
+  <div class="notes">
+    <div><b>1. Title (20 sec)</b>Say the name, then the one-line pitch. State that Stages 0 to 2 are built and that Stage 3 is next.</div>
+    <div><b>2. The problem (1 min)</b>Open with: "How do you decide a library is safe? Most of us check the stars." Walk through the three incidents quickly. The point is the pattern, not the details.</div>
+    <div><b>3. The need (40 sec)</b>Pick the group closest to your audience and speak to it directly. Mention regulation only as a tailwind.</div>
+    <div><b>4. The gap (1 min)</b>Be fair to these tools, since they are good at what they do. Say "in our survey" when making the claim, and note the features will be re-checked.</div>
+    <div><b>5. The idea (40 sec)</b>Four verbs: track, map, recommend, prove. Stress that the fourth is the unusual one. Say that 1,996 packages are scored today.</div>
+    <div><b>6. Core insight (1 min 15 sec)</b>This is the key slide, so slow down. Follow the chain left to right, land on Package D, and explain why risk 32 comes from three levels down. Make clear the example is invented and that the graph is built in Stage 4.</div>
+    <div><b>7. The score (45 sec)</b>Do not read the bars. Point to the red one, say it is what others lack, then give the "weights have not changed" line.</div>
+    <div><b>8. Recommendation (45 sec)</b>Read the example need aloud. Explain that templates were chosen over an LLM because an explanation must not invent a reason.</div>
+    <div><b>9. Architecture (1 min 15 sec)</b>Read it top down. Three ideas: one lake as the truth, one copy per access pattern, and visitors only read copies. Say which layers exist today.</div>
+    <div><b>10. Design choices (45 sec)</b>Show the thinking, not the logos. Pick one row, then the Kafka answer. Admit that the free scheduler starts late.</div>
+    <div><b>11. The proof (1 min 15 sec)</b>Say plainly that there are no backtest results yet, and share the early warning: last commit alone beat the score on a rough test. Explain "tune early, report late", and why the definition is committed before looking at data.</div>
+    <div><b>12. Roadmap (45 sec)</b>Gates matter more than dates. Stages 0 to 2 are built; point out that the MVP comes next, then the differentiators.</div>
+    <div><b>13. Demo points (45 sec)</b>Describe the story you will show. Do not imply any of it runs today.</div>
+    <div><b>14. Risks (45 sec)</b>Name the slow scheduler first, because it is measured and not guessed. Close on the maintainers line, since it shows judgment.</div>
+    <div><b>15. Summary (30 sec)</b>Repeat the opening line about stars, give the three numbers (two are measured), and name Stage 3 as the next step.</div>
+    <div><b>16. Appendix (as needed)</b>Use it only if the audience saw the 1 November version, or asks what changed.</div>
+  </div>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>17</span></div>
+</section>
+
+<!-- notes 2 -->
+<section class="s" style="padding-top:36px">
+  <p class="eyebrow">Speaker notes</p>
+  <h1 style="font-size:28px;margin-bottom:12px">Likely questions and short answers (1 of 2)</h1>
+  <table class="qa">
+    <tr><th style="width:33%">Question</th><th>Answer</th></tr>
+    <tr><td>Why three stores for 2,000 packages?</td><td>Access patterns need it, not scale. The cost is more moving parts, contained because the other stores are rebuildable copies of the lake.</td></tr>
+    <tr><td>Why not stream with Kafka?</td><td>Health moves over days and weeks. A 30-minute batch supports the same decisions with no always-on server.</td></tr>
+    <tr><td>How do you handle late or duplicate data?</td><td>Events merge by id into date-hour partitions, and each repository's position advances only after its data is stored, so a retry never double-counts. If a gap opens, the six-month backfill refills it.</td></tr>
+    <tr><td>How do you know the data is right?</td><td>dbt tests (32 so far) on keys, nulls, ranges, uniqueness and freshness, plus a duplicate check on events. The publish step will stop on a failed test; that gate is built in Stage 3.</td></tr>
+    <tr><td>How do you map a package to its repo?</td><td>PyPI project URLs and deps.dev links, plus a manual override file. Unmapped packages are reported, not dropped: 4 of 2,000 today.</td></tr>
+    <tr><td>Why not use GH Archive?</td><td>We measured it. Recent hourly files held under 1% of the events the API shows, and one day was missing about half the pull requests. We dropped it and backfilled from GraphQL.</td></tr>
+  </table>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>18</span></div>
+</section>
+
+<!-- notes 3 -->
+<section class="s" style="padding-top:36px">
+  <p class="eyebrow">Speaker notes</p>
+  <h1 style="font-size:28px;margin-bottom:12px">Likely questions and short answers (2 of 2)</h1>
+  <table class="qa">
+    <tr><th style="width:33%">Question</th><th>Answer</th></tr>
+    <tr><td>Does the score beat simple baselines?</td><td>Unknown until Stage 6. An early check on a rough stand-in had last commit alone ahead of the score (19 against 15 of 49), so that comparison will be reported either way.</td></tr>
+    <tr><td>Is the refresh really every 30 minutes?</td><td>It is scheduled that way, but GitHub's free scheduler ran it about every 6 hours over the first week, with gaps up to 10 hours. A heartbeat check alerts on silence, and an outside trigger is the next fix.</td></tr>
+    <tr><td>Why DuckDB and not Spark?</td><td>After early filtering the data fits on one machine, and the dbt SQL can move to a warehouse later.</td></tr>
+    <tr><td>How does this scale?</td><td>Swap Actions for Airflow, the dataset for Iceberg, DuckDB for a warehouse, and Neo4j Free for paid. The layers stay the same.</td></tr>
+    <tr><td>Why templates and not an LLM?</td><td>They are deterministic, testable and free, and every sentence traces to a score component.</td></tr>
+    <tr><td>What if the API sleeps or Neo4j pauses?</td><td>The static dashboard is unaffected, the API cold-starts, and pipeline writes keep Neo4j active. The graph can be rebuilt from the lake.</td></tr>
+    <tr><td>What if the backtest fails?</td><td>Then we publish that. A clear negative result is still useful, and the graph comparison shows what to change.</td></tr>
+  </table>
+  <div class="foot"><span>Faultline | Dhatri Neerja</span><span>19</span></div>
+</section>
+
+</body>
+</html>
