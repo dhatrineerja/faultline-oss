@@ -74,7 +74,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_DATASET_REPO: ${{ secrets.HF_DATASET_REPO }}
         run: |
-          python -m faultline.ingestion.repo_refresh --batch 60 || { echo "::warning::repo refresh failed; waiting repos are read on a later run"; exit 1; }
+          python -m faultline.ingestion.repo_refresh --batch 100 || { echo "::warning::repo refresh failed; waiting repos are read on a later run"; exit 1; }
       # Heartbeat. A run that never starts sends nothing, so silence is what raises the alert.
       - name: Ping the heartbeat after a good run
         if: success()
