@@ -1,0 +1,32 @@
+name: claims-check
+
+# Daily measurement of the pipeline claims (ops/verify_claims.py). The report goes to the run summary.
+# The run fails if any claim FAILS, so GitHub emails the owner. PENDING (the 7-day claim, until
+# 2026-11-16 19:10 UTC) is not a failure. Uses the same secrets as refresh.yml.
+on:
+  schedule:
+    - cron: "0 20 * * *"
+  workflow_dispatch:
+
+jobs:
+  claims:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[pipeline]"
+      - name: Measure the claims
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_API_TOKEN }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_DATASET_REPO: ${{ secrets.HF_DATASET_REPO }}
+        run: |
+          set +e
+          python ops/verify_claims.py --since 2026-11-09T19:10 --out report.md
+          code=$?
+          { echo "## Claims check"; cat report.md; } >> "$GITHUB_STEP_SUMMARY"
+          exit $code
