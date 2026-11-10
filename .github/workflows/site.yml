@@ -1,0 +1,80 @@
+name: site
+
+# Rebuild the scores and the dashboard, then publish to Vercel. Runs after a good refresh (once an
+# hour: only the refresh runs that start in the first half of the hour) or by hand.
+# Any failing step, including a failing dbt test, stops before the deploy, so the site keeps the
+# last good data. The Vercel step runs only when the repository variable PUBLISH_SITE is "true",
+# so nothing goes public until the owner has confirmed the data licence (docs/data-licence.md);
+# without it the run still builds and tests everything. Needs the secrets of refresh.yml plus:
+#   VERCEL_TOKEN, VERCEL_PROJECT_ID, VERCEL_ID (the team or account id, passed as VERCEL_ORG_ID)
+on:
+  workflow_run:
+    workflows: [refresh]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: site
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      HF_TOKEN: ${{ secrets.HF_TOKEN }}
+      HF_DATASET_REPO: ${{ secrets.HF_DATASET_REPO }}
+    steps:
+      - name: Hourly throttle
+        id: gate
+        run: |
+          minute=$(date -u +%-M)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "$minute" -lt 30 ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"; echo "Skipped: second refresh of the hour"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.gate.outputs.go == 'true'
+      - uses: actions/setup-python@v5
+        if: steps.gate.outputs.go == 'true'
+        with:
+          python-version: "3.12"
+          cache: pip
+      - uses: actions/setup-node@v4
+        if: steps.gate.outputs.go == 'true'
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - if: steps.gate.outputs.go == 'true'
+        run: pip install -e ".[pipeline,transform]"
+      - name: Download the lake
+        if: steps.gate.outputs.go == 'true'
+        run: python ops/sync_lake.py
+      - name: Compute scores and run the data tests
+        if: steps.gate.outputs.go == 'true'
+        working-directory: transform
+        run: |
+          dbt seed --profiles-dir .
+          dbt run --profiles-dir .
+          dbt test --profiles-dir .
+      - name: Export the derived tables
+        if: steps.gate.outputs.go == 'true'
+        run: python ops/export_site_data.py
+      - name: Build the site
+        if: steps.gate.outputs.go == 'true'
+        working-directory: dashboard
+        run: |
+          npm ci
+          npx evidence sources
+          npx evidence build
+      - name: Publish to Vercel
+        if: steps.gate.outputs.go == 'true' && vars.PUBLISH_SITE == 'true'
+        working-directory: dashboard
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ID }}
+        run: npx --yes vercel@65.14.0 deploy build --prod --yes --token "$VERCEL_TOKEN"

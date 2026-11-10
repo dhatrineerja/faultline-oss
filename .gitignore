@@ -48,3 +48,6 @@ transform/.user.yml
 
 # Vercel link folder (project and org ids)
 .vercel/
+
+# Derived tables the dashboard reads; rebuilt by ops/export_site_data.py, never committed
+dashboard/sources/faultline/*.csv
