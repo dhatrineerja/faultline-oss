@@ -101,9 +101,6 @@ select
     package,
     repo,
     (select as_of from {{ ref('int_params') }}) as as_of,
-    -- last day maintainer activity covers; every other component is measured as of as_of
-    cast((select live_end_ts from {{ ref('int_params') }}) - to_days(1) as date)
-        as maintainer_activity_as_of,
     '{{ var("score_formula_version") }}' as formula_version,
     case
         when not repo_found then 'unmapped'

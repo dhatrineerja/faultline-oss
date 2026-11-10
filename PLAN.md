@@ -6,7 +6,7 @@
 | **Author and owner** | Dhatri Neerja |
 | **Version** | 1.1 |
 | **Date** | 2 November 2026 |
-| **Status** | Stage 0 done. Stage 1 built and loaded (Events API job on a 30-minute schedule, 6-month backfill and PyPI history uploaded); its 7-day run checkpoint is in progress. Stage 2 built (dbt models, 33 tests, score v1); every mapped package has a score (1,996 of 1,996, against the 95% target; 807 scores are labelled low confidence). Stage 3 started: maintainer activity now follows the live data (events plus a merged-PR top-up, measured 85% event recall and no missed repos in a 150-repo sample); the other components stay at the 1 November snapshot, and the score table says so per row. Dashboard, deploy and alert test are next. |
+| **Status** | Stage 0 done. Stage 1 built and loaded (Events API job on a 30-minute schedule, 6-month backfill and PyPI history uploaded); its 7-day run checkpoint is in progress. Stage 2 built (dbt models, 33 tests, score v1); every mapped package has a score (1,996 of 1,996, against the 95% target; 807 scores are labelled low confidence). Stage 3 started: an incremental refresh (events say which repos changed; GraphQL reads only those) keeps all six components current, and `as_of` moved from 1 to 8 November; the catch-up read 1,163 repos with no repo cut short, and PyPI history was reloaded. Dashboard, deploy and alert test are next. |
 
 Stages 1 and 2 are built; everything from Stage 3 onward is still a plan. Costs, limits and timelines for stages not yet built are planning estimates, and the items in [section 17](#17-open-items) must be confirmed before they are relied on. Version 1.1 changed the data sources after GH Archive was measured and found incomplete (see sections 9 and 14).
 

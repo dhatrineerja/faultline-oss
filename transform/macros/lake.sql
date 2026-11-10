@@ -11,3 +11,10 @@ select
     cast(regexp_extract(filename, 'snapshot=([0-9-]+)', 1) as date) as snapshot_date
 from read_parquet('{{ lake_dir() }}/{{ folder }}/**/*.parquet', hive_partitioning = false, filename = true)
 {%- endmacro %}
+
+{#- Rows the incremental refresh job wrote for a table (same columns as the backfill table),
+    with the file name so the newest run can win a tie. -#}
+{% macro refresh_rows(table) -%}
+select *
+from read_parquet('{{ lake_dir() }}/refresh/{{ table }}/**/*.parquet', hive_partitioning = false, filename = true)
+{%- endmacro %}

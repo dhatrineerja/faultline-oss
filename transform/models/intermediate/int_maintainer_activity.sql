@@ -1,7 +1,7 @@
--- Distinct people who merged a pull request or published a release in the live window: the
--- window_days days ending at live_end_ts, which follows the event stream and top-up job past the
--- backfill snapshot (see int_params and int_people_events). Triage (labelling or closing) is not
--- in the backfill data, so it is not counted; see the definitions changelog.
+-- Distinct people who merged a pull request or published a release in the current window.
+-- Merges and releases after the backfill snapshot come from the incremental refresh, merged into
+-- the staging models. Triage (labelling or closing) is not in the data, so it is not counted; see
+-- the definitions changelog.
 select
     c.repo,
     count(distinct e.person) as value
@@ -10,6 +10,6 @@ cross join {{ ref('int_params') }} as p
 left join {{ ref('int_people_events') }} as e
     on e.repo = c.repo
    and e.kind in ('merge', 'release')
-   and e.ts >= p.live_cur_start and e.ts < p.live_end_ts
-where c.prs_covered_from <= p.live_cur_start
+   and e.ts >= p.cur_start and e.ts < p.end_ts
+where c.prs_covered_from <= p.cur_start
 group by c.repo

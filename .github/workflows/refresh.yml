@@ -63,17 +63,18 @@ jobs:
             sleep 60
           done
           exit 1
-      # Merge events name the PR author, not the merger, so repos with new merges are re-read
-      # through GraphQL (src/faultline/ingestion/topup.py). A failure here must not fail the
-      # events load or the heartbeat: the job keeps its place and retries the repos next run.
-      - name: Top up merged pull requests
+      # Bring every score component up to date for the repos that changed: the events say which
+      # repos had activity, and at most 60 of them (oldest waiting first) are read again through
+      # GraphQL (src/faultline/ingestion/repo_refresh.py). A failure here must not fail the events
+      # load or the heartbeat: the repos stay in the waiting list and are read on a later run.
+      - name: Refresh changed repos
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GH_API_TOKEN }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_DATASET_REPO: ${{ secrets.HF_DATASET_REPO }}
         run: |
-          python -m faultline.ingestion.topup || { echo "::warning::merged-PR top-up failed; it retries next run"; exit 1; }
+          python -m faultline.ingestion.repo_refresh --batch 60 || { echo "::warning::repo refresh failed; waiting repos are read on a later run"; exit 1; }
       # Heartbeat. A run that never starts sends nothing, so silence is what raises the alert.
       - name: Ping the heartbeat after a good run
         if: success()

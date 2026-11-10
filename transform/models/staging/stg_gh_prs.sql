@@ -1,4 +1,24 @@
-with src as ({{ with_snapshot('backfill/prs') }})
+-- Pull requests: the newest backfill snapshot, with the incremental refresh rows merged in.
+-- A pull request read again later keeps its row with the newest updated_at (a later run wins a tie).
+with backfill as ({{ with_snapshot('backfill/prs') }}),
+
+merged as (
+    select * exclude (snapshot_date), 0 as src, '' as filename
+    from backfill
+    where snapshot_date = (select max(snapshot_date) from backfill)
+
+    union all by name
+
+    select *, 1 as src from ({{ refresh_rows('prs') }})
+),
+
+src as (
+    select *
+    from merged
+    qualify row_number() over (
+        partition by tracked_repo, number order by updated_at desc, src desc, filename desc
+    ) = 1
+)
 
 select
     tracked_repo as repo,
@@ -14,4 +34,3 @@ select
     first_comments,
     first_reviews
 from src
-where snapshot_date = (select max(snapshot_date) from src)
